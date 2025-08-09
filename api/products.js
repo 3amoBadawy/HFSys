@@ -1,4 +1,5 @@
 import express from 'express'
+import { ensurePerm } from './perm.js'
 import fs from 'fs'
 import { nanoid } from 'nanoid'
 
@@ -31,12 +32,12 @@ function saveDB(db){ fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)) }
 
 const router = express.Router()
 
-router.get('/products', (req,res)=>{
+router.get('/products', ensurePerm('view_products'), (req,res)=>{
   const db = loadDB()
   res.json(db.products)
 })
 
-router.post('/products', (req,res)=>{
+router.post('/products', ensurePerm('manage_products'), (req,res)=>{
   const db = loadDB()
   const b = req.body||{}
   if(!b.name || !b.sku) return res.status(400).json({error:'الاسم و الكود (SKU) مطلوبان'})
@@ -57,7 +58,7 @@ router.post('/products', (req,res)=>{
   res.status(201).json(prod)
 })
 
-router.put('/products/:id', (req,res)=>{
+router.put('/products/:id', ensurePerm('manage_products'), (req,res)=>{
   const db = loadDB()
   const i = db.products.findIndex(p=>p.id===req.params.id)
   if(i<0) return res.status(404).json({error:'غير موجود'})
@@ -80,7 +81,7 @@ router.put('/products/:id', (req,res)=>{
   res.json(db.products[i])
 })
 
-router.delete('/products/:id', (req,res)=>{
+router.delete('/products/:id', ensurePerm('manage_products'), (req,res)=>{
   const db = loadDB()
   const before = db.products.length
   db.products = db.products.filter(p=>p.id!==req.params.id)

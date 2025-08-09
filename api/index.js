@@ -1,4 +1,5 @@
 import express from 'express'
+import productsRouter from './products.js'
 import cors from 'cors'
 import fs from 'fs'
 import { nanoid } from 'nanoid'
@@ -47,7 +48,7 @@ app.get('/', (_req,res)=> res.type('text').send('HF API is live ✅'))
 app.get('/health', (_req,res)=> res.json({ ok: true }))
 
 // Demo login (email+password ثابتين)
-const DEMO_USER = { email:'admin@highfurniture.com', password:'Admin@123', name:'Admin' }
+const DEMO_USER = { role: 'admin',  email:'admin@highfurniture.com', password:'Admin@123', name:'Admin' }
 app.post('/login', (req,res)=>{
   const { email, password } = req.body || {}
   if(email === DEMO_USER.email && password === DEMO_USER.password){

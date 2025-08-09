@@ -12,5 +12,32 @@
       "active": true,
       "createdAt": "2025-08-09T00:00:00Z"
     }
+  ],
+  "roles": [
+    {
+      "name": "admin",
+      "permissions": [
+        "manage_invoices",
+        "manage_products",
+        "manage_users",
+        "settings_access",
+        "view_products",
+        "view_reports",
+        "view_users"
+      ]
+    },
+    {
+      "name": "manager",
+      "permissions": [
+        "manage_products",
+        "view_products"
+      ]
+    },
+    {
+      "name": "staff",
+      "permissions": [
+        "view_products"
+      ]
+    }
   ]
 }
