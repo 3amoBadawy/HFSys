@@ -7,15 +7,13 @@ export default function AdminDashboard(){
   const [tab,setTab]=useState('users')
   const [canManageUsers,setCanManageUsers]=useState(false)
 
-  // اعرض تبويب "الأدوار" فقط لو معاك صلاحية manage_users (الـAPI هيرجع 403 لو مفيش)
   useEffect(()=>{
     (async()=>{
       try{
+        // لو المستخدم معندوش صلاحية manage_users، /roles هترجع 403
         const r = await apiFetch('/roles')
         setCanManageUsers(r.ok)
-      }catch{
-        setCanManageUsers(false)
-      }
+      }catch{ setCanManageUsers(false) }
     })()
   },[])
 
