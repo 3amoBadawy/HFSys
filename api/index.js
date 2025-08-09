@@ -14,7 +14,7 @@ app.use(express.json({ limit: '5mb' }));
 const DB_PATH = './db.json';
 function loadDB(){
   if(!fs.existsSync(DB_PATH)){
-    fs.writeFileSync(DB_PATH, JSON.stringify({ invoices: [], lastSeq: 0 }, null, 2));
+    fs.writeFileSync(DB_PATH, JSON.stringify({ invoices: [], lastSeq: 0, customers: [] }, null, 2));
   }
   return JSON.parse(fs.readFileSync(DB_PATH,'utf-8'));
 }
@@ -41,6 +41,44 @@ function auth(req,res,next){
 }
 
 const router = express.Router();
+
+// -------- Customers CRUD --------
+router.get("/customers", (req,res)=>{ const db=loadDB(); res.json(db.customers||[]); });
+
+router.post("/customers", (req,res)=>{
+  const db=loadDB();
+  db.customers = db.customers || [];
+  const b = req.body||{};
+  if(!b.name || !String(b.name).trim()) return res.status(400).json({error:"Name required"});
+  const item = {
+    id: nanoid(),
+    name: String(b.name).trim(),
+    phone: b.phone||"",
+    address: b.address||"",
+    notes: b.notes||"",
+    createdAt: new Date().toISOString()
+  };
+  db.customers.push(item); saveDB(db);
+  res.status(201).json(item);
+});
+
+router.put("/customers/:id", (req,res)=>{
+  const db=loadDB(); db.customers=db.customers||[];
+  const i = db.customers.findIndex(c=>c.id===req.params.id);
+  if(i<0) return res.status(404).json({error:"Not found"});
+  const b=req.body||{};
+  db.customers[i] = { ...db.customers[i], ...b, id: db.customers[i].id };
+  saveDB(db); res.json(db.customers[i]);
+});
+
+router.delete("/customers/:id", (req,res)=>{
+  const db=loadDB(); db.customers=db.customers||[];
+  const before = db.customers.length;
+  db.customers = db.customers.filter(c=>c.id!==req.params.id);
+  if(db.customers.length===before) return res.status(404).json({error:"Not found"});
+  saveDB(db); res.json({ok:true});
+});
+
 router.get('/invoices', (req,res)=>{ const db = loadDB(); res.json(db.invoices); });
 router.post('/invoices', (req,res)=>{
   const db = loadDB(); const body = req.body || {};
