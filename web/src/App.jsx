@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { apiFetch } from './apiBase'
-import CustomerSelect from './CustomerSelect'
+import Customers from './Customers'
 import './ui.css'
 
 function Login({ onSuccess }) {
@@ -96,7 +96,7 @@ export default function App(){
             <form onSubmit={saveInvoice} className="grid">
               <div>
                 <label className="muted">العميل</label>
-                <CustomerSelect value={selectedCustomer} onChange={setSelectedCustomer}/>
+                {/* هنركّب CustomerSelect بعدين لما ندمجه؛ مؤقتًا نكتبه يدوي أو نستخدم كومبوننت الاختيار */}
               </div>
               <div className="grid grid-2">
                 <div>
@@ -128,9 +128,7 @@ export default function App(){
             <h3 className="h2">آخر الفواتير</h3>
             <table className="table">
               <thead>
-                <tr>
-                  <th>الكود</th><th>العميل</th><th>المبلغ</th><th>التاريخ</th>
-                </tr>
+                <tr><th>الكود</th><th>العميل</th><th>المبلغ</th><th>التاريخ</th></tr>
               </thead>
               <tbody>
                 {invoices.map(inv=>(
@@ -151,9 +149,7 @@ export default function App(){
       {tab==='customers' && (
         <div className="card">
           <h3 className="h2">العملاء</h3>
-          {/* هتظهر شاشة العملاء من Customers.jsx عن طريق الروت /customers في نافذة منفصلة لو عايز */}
-          {/* أو نركّبها هنا لاحقًا كصفحة كاملة */}
-          <iframe title="customers" srcdoc="<style>body{margin:0;background:transparent}</style><div id='app'></div>" style={{display:'none'}}/>
+          <Customers/>
         </div>
       )}
     </div>
