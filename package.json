@@ -6,5 +6,8 @@
     "dev-api": "npm --prefix api run dev",
     "dev-web": "npm --prefix web run dev"
   },
-  "devDependencies": { "concurrently": "^8.2.2" }
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "type": "module"
 }
