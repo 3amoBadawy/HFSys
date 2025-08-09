@@ -1,5 +1,4 @@
 import express from 'express'
-import { ensurePerm } from './perm.js'
 import fs from 'fs'
 import { nanoid } from 'nanoid'
 
@@ -7,87 +6,78 @@ const DB_PATH = './db.json'
 function loadDB(){
   if(!fs.existsSync(DB_PATH)){
     fs.writeFileSync(DB_PATH, JSON.stringify({
-      invoices:[], customers:[], products:[],
-      roles:[{ name:'admin', permissions:[
-        'manage_users','view_users','manage_invoices','view_reports',
-        'settings_access','view_products','manage_products'
-      ]}]
+      invoices:[], products:[], customers:[],
+      roles:[
+        { name:'admin', permissions:[
+          'manage_users','view_users',
+          'manage_invoices','view_reports','settings_access',
+          'view_products','manage_products'
+        ] }
+      ],
+      users:[
+        { id:'seed-admin', name:'Admin', email:'admin@highfurniture.com', role:'admin', active:true }
+      ],
+      lastSeq:0
     }, null, 2))
   }
-  const db = JSON.parse(fs.readFileSync(DB_PATH,'utf-8')||'{}')
-  db.products ||= []
-  db.roles ||= [{name:'admin', permissions:[]}]
-
-  // seed perms for admin if missing
-  const admin = db.roles.find(r=>r.name==='admin')
-  if(admin){
-    for(const p of ['view_products','manage_products']){
-      if(!admin.permissions.includes(p)) admin.permissions.push(p)
-    }
-  }
-  fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2))
-  return db
+  return JSON.parse(fs.readFileSync(DB_PATH,'utf-8'))
 }
-function saveDB(db){ fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)) }
+function saveDB(db){ fs.writeFileSync(DB_PATH, JSON.stringify(db,null,2)) }
 
-const router = express.Router()
+const r = express.Router()
 
-router.get('/products', ensurePerm('view_products'), (req,res)=>{
+// GET all
+r.get('/products', (req,res)=>{
   const db = loadDB()
-  res.json(db.products)
+  res.json(db.products||[])
 })
 
-router.post('/products', ensurePerm('manage_products'), (req,res)=>{
+// Create
+r.post('/products', (req,res)=>{
   const db = loadDB()
   const b = req.body||{}
-  if(!b.name || !b.sku) return res.status(400).json({error:'الاسم و الكود (SKU) مطلوبان'})
-  const exists = db.products.find(p=>p.sku===b.sku)
-  if(exists) return res.status(409).json({error:'هذا الكود موجود بالفعل'})
-  const prod = {
+  if(!b.name || !b.sku) return res.status(400).json({error:'name & sku required'})
+  const exists = (db.products||[]).some(p=>p.sku === b.sku)
+  if(exists) return res.status(409).json({error:'SKU already exists'})
+
+  const p = {
     id: nanoid(),
     name: String(b.name).trim(),
     sku: String(b.sku).trim(),
     price: Number(b.price||0),
-    category: String(b.category||''),
     stock: Number(b.stock||0),
+    notes: b.notes||'',
     imageData: b.imageData||'',
-    active: b.active!==false,
     createdAt: new Date().toISOString()
   }
-  db.products.push(prod); saveDB(db)
-  res.status(201).json(prod)
+  db.products = db.products||[]
+  db.products.push(p)
+  saveDB(db)
+  res.status(201).json(p)
 })
 
-router.put('/products/:id', ensurePerm('manage_products'), (req,res)=>{
+// Update
+r.put('/products/:id', (req,res)=>{
   const db = loadDB()
-  const i = db.products.findIndex(p=>p.id===req.params.id)
-  if(i<0) return res.status(404).json({error:'غير موجود'})
-  const cur = db.products[i]
+  const i = (db.products||[]).findIndex(p=>p.id===req.params.id)
+  if(i===-1) return res.status(404).json({error:'Not found'})
   const b = req.body||{}
-  // منع تكرار SKU عند التعديل
-  if(b.sku && db.products.some(p=>p.sku===b.sku && p.id!==cur.id)){
-    return res.status(409).json({error:'كود SKU مستخدم بالفعل'})
+  if(b.sku){
+    const dupe = db.products.some(p=>p.sku===b.sku && p.id!==req.params.id)
+    if(dupe) return res.status(409).json({error:'SKU already exists'})
   }
-  db.products[i] = { ...cur,
-    name: b.name ?? cur.name,
-    sku: b.sku ?? cur.sku,
-    price: b.price!==undefined ? Number(b.price) : cur.price,
-    category: b.category ?? cur.category,
-    stock: b.stock!==undefined ? Number(b.stock) : cur.stock,
-    imageData: b.imageData!==undefined ? b.imageData : cur.imageData,
-    active: b.active!==undefined ? !!b.active : cur.active,
-  }
+  db.products[i] = { ...db.products[i], ...b }
   saveDB(db)
   res.json(db.products[i])
 })
 
-router.delete('/products/:id', ensurePerm('manage_products'), (req,res)=>{
+// Delete
+r.delete('/products/:id', (req,res)=>{
   const db = loadDB()
-  const before = db.products.length
-  db.products = db.products.filter(p=>p.id!==req.params.id)
-  if(db.products.length===before) return res.status(404).json({error:'غير موجود'})
+  const before = (db.products||[]).length
+  db.products = (db.products||[]).filter(p=>p.id!==req.params.id)
   saveDB(db)
-  res.json({ok:true})
+  res.json({ ok:true, removed: before - db.products.length })
 })
 
-export default router
+export default r
