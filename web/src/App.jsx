@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { apiFetch, fmtEGP } from './apiBase'
 import Customers from './Customers'
 import CustomerSelect from './CustomerSelect'
-import AdminUsers from './Admin'
+import AdminDashboard from './Admin'
 import './ui.css'
 
 function Login({ onSuccess }) {
@@ -115,7 +115,7 @@ export default function App(){
 
       {tab==='customers' && <div className="card"><h3 className="h2">العملاء</h3><Customers/></div>}
 
-      {tab==='admin' && isAdmin && <AdminUsers/>}
+      {tab==='admin' {tab==='admin' && isAdmin && <AdminUsers/>}{tab==='admin' && isAdmin && <AdminUsers/>} isAdmin {tab==='admin' && isAdmin && <AdminUsers/>}{tab==='admin' && isAdmin && <AdminUsers/>} <AdminDashboard/>}
     </div>
   )
 }
