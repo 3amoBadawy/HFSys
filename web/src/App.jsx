@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { apiFetch, fmtEGP } from './apiBase'
 import Customers from './Customers'
 import CustomerSelect from './CustomerSelect'
+import AdminUsers from './Admin'
 import './ui.css'
 
 function Login({ onSuccess }) {
@@ -38,9 +39,10 @@ function Login({ onSuccess }) {
 export default function App(){
   const [authed, setAuthed] = useState(!!localStorage.getItem('hf_token'))
   const [tab, setTab] = useState('sales')
-  const [invoices, setInvoices] = useState([])
+  const [user, setUser] = useState(()=>{ try{return JSON.parse(localStorage.getItem('hf_user')||'null')}catch{return null}})
+  const isAdmin = user?.role === 'admin'
 
-  // نموذج المبيعات
+  const [invoices, setInvoices] = useState([])
   const [cust, setCust] = useState(null)
   const [amount, setAmount] = useState('')
   const [branchCode, setBranchCode] = useState('')
@@ -51,31 +53,21 @@ export default function App(){
   useEffect(()=>{
     if(!authed) return
     apiFetch('/invoices').then(r=>r.json()).then(setInvoices).catch(()=>{})
+    setUser(()=>{ try{return JSON.parse(localStorage.getItem('hf_user')||'null')}catch{return null}})
   }, [authed])
 
-  function logout(){ localStorage.removeItem('hf_token'); localStorage.removeItem('hf_user'); setAuthed(false) }
+  function logout(){ localStorage.removeItem('hf_token'); localStorage.removeItem('hf_user'); setAuthed(false); setUser(null) }
 
   async function saveInvoice(e){
     e.preventDefault()
     if(!cust){ alert('من فضلك اختر عميل'); return }
-    const payload = {
-      customerId: cust.id,
-      customer: cust.name,
-      amount: parseFloat(amount||0),
-      branchCode, deliveryDate, address, imageData
-    }
+    const payload = { customerId:cust.id, customer:cust.name, amount:parseFloat(amount||0), branchCode, deliveryDate, address, imageData }
     const res = await apiFetch('/invoices', { method:'POST', body: JSON.stringify(payload) })
     if(!res.ok){ const t=await res.json().catch(()=>({})); alert(t.error||'فشل الحفظ'); return }
     const data = await res.json()
-    setInvoices(v=>[...v, data])
-    // reset
-    setCust(null); setAmount(''); setBranchCode(''); setDeliveryDate(''); setAddress(''); setImageData('')
+    setInvoices(v=>[...v, data]); setCust(null); setAmount(''); setBranchCode(''); setDeliveryDate(''); setAddress(''); setImageData('')
   }
-
-  function onPickImage(e){
-    const f = e.target.files?.[0]; if(!f) return setImageData('')
-    const reader = new FileReader(); reader.onload = ev => setImageData(ev.target.result); reader.readAsDataURL(f)
-  }
+  function onPickImage(e){ const f=e.target.files?.[0]; if(!f) return setImageData(''); const r=new FileReader(); r.onload=ev=>setImageData(ev.target.result); r.readAsDataURL(f) }
 
   if(!authed) return <Login onSuccess={()=>setAuthed(true)} />
 
@@ -85,6 +77,7 @@ export default function App(){
         <div className="tabs">
           <button onClick={()=>setTab('sales')} className={'tab '+(tab==='sales'?'active':'')}>المبيعات</button>
           <button onClick={()=>setTab('customers')} className={'tab '+(tab==='customers'?'active':'')}>العملاء</button>
+          {isAdmin && <button onClick={()=>setTab('admin')} className={'tab '+(tab==='admin'?'active':'')}>الإدارة</button>}
         </div>
         <button onClick={logout} className="btn btn-red">تسجيل الخروج</button>
       </div>
@@ -94,52 +87,24 @@ export default function App(){
           <div className="card">
             <h3 className="h2">إضافة عملية بيع</h3>
             <form onSubmit={saveInvoice} className="grid">
-              <div>
-                <label className="muted">العميل</label>
-                <CustomerSelect value={cust} onChange={setCust} placeholder="اختر عميل بالاسم/الهاتف" />
-              </div>
+              <div><label className="muted">العميل</label><CustomerSelect value={cust} onChange={setCust}/></div>
               <div className="grid grid-2">
-                <div>
-                  <label className="muted">المبلغ</label>
-                  <input className="input" type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} required/>
-                </div>
-                <div>
-                  <label className="muted">رقم الفاتورة (الفرع)</label>
-                  <input className="input" value={branchCode} onChange={e=>setBranchCode(e.target.value)} />
-                </div>
-                <div>
-                  <label className="muted">تاريخ التسليم</label>
-                  <input className="input" type="date" value={deliveryDate} onChange={e=>setDeliveryDate(e.target.value)} />
-                </div>
-                <div>
-                  <label className="muted">عنوان التسليم</label>
-                  <input className="input" value={address} onChange={e=>setAddress(e.target.value)} />
-                </div>
+                <div><label className="muted">المبلغ</label><input className="input" type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} required/></div>
+                <div><label className="muted">رقم الفاتورة (الفرع)</label><input className="input" value={branchCode} onChange={e=>setBranchCode(e.target.value)} /></div>
+                <div><label className="muted">تاريخ التسليم</label><input className="input" type="date" value={deliveryDate} onChange={e=>setDeliveryDate(e.target.value)} /></div>
+                <div><label className="muted">عنوان التسليم</label><input className="input" value={address} onChange={e=>setAddress(e.target.value)} /></div>
               </div>
-              <div>
-                <label className="muted">صورة الفاتورة</label>
-                <input className="input" type="file" accept="image/*" onChange={onPickImage} />
-              </div>
+              <div><label className="muted">صورة الفاتورة</label><input className="input" type="file" accept="image/*" onChange={onPickImage} /></div>
               <div><button className="btn btn-green">حفظ</button></div>
             </form>
           </div>
 
           <div className="card" style={{marginTop:12}}>
             <h3 className="h2">آخر الفواتير</h3>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>الكود</th><th>العميل</th><th>المبلغ</th><th>التاريخ</th>
-                </tr>
-              </thead>
+            <table className="table"><thead><tr><th>الكود</th><th>العميل</th><th>المبلغ</th><th>التاريخ</th></tr></thead>
               <tbody>
                 {invoices.map(inv=>(
-                  <tr key={inv.id}>
-                    <td>{inv.code}</td>
-                    <td>{inv.customer || '—'}</td>
-                    <td>{fmtEGP(inv.amount)}</td>
-                    <td>{new Date(inv.createdAt).toLocaleDateString('en-CA')}</td>
-                  </tr>
+                  <tr key={inv.id}><td>{inv.code}</td><td>{inv.customer||'—'}</td><td>{fmtEGP(inv.amount)}</td><td>{new Date(inv.createdAt).toLocaleDateString('en-CA')}</td></tr>
                 ))}
                 {!invoices.length && <tr><td colSpan={4} className="muted">لا توجد فواتير بعد</td></tr>}
               </tbody>
@@ -148,12 +113,9 @@ export default function App(){
         </>
       )}
 
-      {tab==='customers' && (
-        <div className="card">
-          <h3 className="h2">العملاء</h3>
-          <Customers/>
-        </div>
-      )}
+      {tab==='customers' && <div className="card"><h3 className="h2">العملاء</h3><Customers/></div>}
+
+      {tab==='admin' && isAdmin && <AdminUsers/>}
     </div>
   )
 }
