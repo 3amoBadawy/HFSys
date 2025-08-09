@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { apiFetch } from './apiBase'
-import Customers from './Customers'
+import CustomerSelect from './CustomerSelect'
+import './ui.css'
 
 function Login({ onSuccess }) {
   const [email, setEmail] = useState('admin@highfurniture.com')
@@ -19,13 +20,19 @@ function Login({ onSuccess }) {
     }catch(e){ setErr(e.message) } finally { setLoading(false) }
   }
   return (
-    <div style={{minHeight:'100vh',display:'grid',placeItems:'center',background:'#0f172a'}}>
-      <form onSubmit={submit} style={{background:'rgba(17,24,39,.95)', padding:20, borderRadius:12, minWidth:320, color:'#e5e7eb', border:'1px solid #1f2937'}}>
-        <h2 style={{marginTop:0, textAlign:'center'}}>تسجيل الدخول</h2>
-        <label>البريد الإلكتروني<input value={email} onChange={e=>setEmail(e.target.value)} required style={inpt}/></label>
-        <label style={{display:'block',marginTop:10}}>كلمة المرور<input type="password" value={password} onChange={e=>setPassword(e.target.value)} required style={inpt}/></label>
+    <div style={{minHeight:'100vh',display:'grid',placeItems:'center',background:'var(--bg)'}}>
+      <form onSubmit={submit} className="card" style={{minWidth:360}}>
+        <h2 className="h1" style={{textAlign:'center'}}>تسجيل الدخول</h2>
+        <label>البريد الإلكتروني
+          <input className="input" value={email} onChange={e=>setEmail(e.target.value)} required/>
+        </label>
+        <label style={{display:'block',marginTop:10}}>كلمة المرور
+          <input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>
+        </label>
         {err && <div style={{color:'#fca5a5',fontSize:13,marginTop:8}}>{err}</div>}
-        <button disabled={loading} style={btnGreen}>{loading ? 'جاري الدخول...' : 'دخول'}</button>
+        <button disabled={loading} className="btn btn-green" style={{width:'100%',marginTop:12}}>
+          {loading ? 'جاري الدخول...' : 'دخول'}
+        </button>
       </form>
     </div>
   )
@@ -35,7 +42,7 @@ export default function App(){
   const [authed, setAuthed] = useState(!!localStorage.getItem('hf_token'))
   const [tab, setTab] = useState('sales')
   const [invoices, setInvoices] = useState([])
-  const [customer, setCustomer] = useState('')
+  const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [amount, setAmount] = useState('')
   const [branchCode, setBranchCode] = useState('')
   const [deliveryDate, setDeliveryDate] = useState('')
@@ -51,12 +58,17 @@ export default function App(){
 
   async function saveInvoice(e){
     e.preventDefault()
-    const payload = { customer, amount: parseFloat(amount||0), branchCode, deliveryDate, address, imageData }
+    const payload = {
+      customer: selectedCustomer?.name || '',
+      customerId: selectedCustomer?.id || null,
+      amount: parseFloat(amount||0),
+      branchCode, deliveryDate, address, imageData
+    }
     const res = await apiFetch('/invoices', { method:'POST', body: JSON.stringify(payload) })
     if(!res.ok){ alert('فشل الحفظ'); return }
     const data = await res.json()
     setInvoices(v=>[...v, data])
-    setCustomer(''); setAmount(''); setBranchCode(''); setDeliveryDate(''); setAddress(''); setImageData('')
+    setSelectedCustomer(null); setAmount(''); setBranchCode(''); setDeliveryDate(''); setAddress(''); setImageData('')
     alert('تم حفظ الفاتورة: ' + data.code)
   }
 
@@ -68,44 +80,82 @@ export default function App(){
   if(!authed) return <Login onSuccess={()=>setAuthed(true)} />
 
   return (
-    <div style={{padding:16, fontFamily:'system-ui'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-        <div style={{display:'flex', gap:8}}>
-          <button onClick={()=>setTab('sales')} style={tab==='sales'?tabOn:tabOff}>المبيعات</button>
-          <button onClick={()=>setTab('customers')} style={tab==='customers'?tabOn:tabOff}>العملاء</button>
+    <div className="container">
+      <div className="header">
+        <div className="tabs">
+          <button onClick={()=>setTab('sales')} className={'tab '+(tab==='sales'?'active':'')}>المبيعات</button>
+          <button onClick={()=>setTab('customers')} className={'tab '+(tab==='customers'?'active':'')}>العملاء</button>
         </div>
-        <button onClick={logout} style={{background:'#ef4444',border:0,color:'#fff',borderRadius:8,padding:'8px 12px'}}>تسجيل الخروج</button>
+        <button onClick={logout} className="btn btn-red">تسجيل الخروج</button>
       </div>
 
       {tab==='sales' && (
         <>
-          <form onSubmit={saveInvoice} style={{display:'grid', gap:8, maxWidth:420}}>
-            <label>اسم العميل<input value={customer} onChange={e=>setCustomer(e.target.value)} required/></label>
-            <label>المبلغ<input type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} required/></label>
-            <label>رقم الفاتورة (الفرع)<input value={branchCode} onChange={e=>setBranchCode(e.target.value)} /></label>
-            <label>تاريخ التسليم<input type="date" value={deliveryDate} onChange={e=>setDeliveryDate(e.target.value)} /></label>
-            <label>عنوان التسليم<input value={address} onChange={e=>setAddress(e.target.value)} /></label>
-            <label>صورة الفاتورة<input type="file" accept="image/*" onChange={onPickImage} /></label>
-            <button>حفظ</button>
-          </form>
+          <div className="card">
+            <h3 className="h2">إضافة عملية بيع</h3>
+            <form onSubmit={saveInvoice} className="grid">
+              <div>
+                <label className="muted">العميل</label>
+                <CustomerSelect value={selectedCustomer} onChange={setSelectedCustomer}/>
+              </div>
+              <div className="grid grid-2">
+                <div>
+                  <label className="muted">المبلغ</label>
+                  <input className="input" type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} required/>
+                </div>
+                <div>
+                  <label className="muted">رقم الفاتورة (الفرع)</label>
+                  <input className="input" value={branchCode} onChange={e=>setBranchCode(e.target.value)} />
+                </div>
+                <div>
+                  <label className="muted">تاريخ التسليم</label>
+                  <input className="input" type="date" value={deliveryDate} onChange={e=>setDeliveryDate(e.target.value)} />
+                </div>
+                <div>
+                  <label className="muted">عنوان التسليم</label>
+                  <input className="input" value={address} onChange={e=>setAddress(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label className="muted">صورة الفاتورة</label>
+                <input className="input" type="file" accept="image/*" onChange={onPickImage} />
+              </div>
+              <div><button className="btn btn-green">حفظ</button></div>
+            </form>
+          </div>
 
-          <h3 style={{marginTop:24}}>آخر الفواتير</h3>
-          <ul>
-            {invoices.map(inv => (
-              <li key={inv.id}>
-                {inv.code} — {inv.customer} — {inv.amount} ج.م — {new Date(inv.createdAt).toLocaleDateString('en-CA')}
-              </li>
-            ))}
-          </ul>
+          <div className="card" style={{marginTop:12}}>
+            <h3 className="h2">آخر الفواتير</h3>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>الكود</th><th>العميل</th><th>المبلغ</th><th>التاريخ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoices.map(inv=>(
+                  <tr key={inv.id}>
+                    <td>{inv.code}</td>
+                    <td>{inv.customer || '—'}</td>
+                    <td>{inv.amount} ج.م</td>
+                    <td>{new Date(inv.createdAt).toLocaleDateString('en-CA')}</td>
+                  </tr>
+                ))}
+                {!invoices.length && <tr><td colSpan={4} className="muted">لا توجد فواتير بعد</td></tr>}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
 
-      {tab==='customers' && <Customers/>}
+      {tab==='customers' && (
+        <div className="card">
+          <h3 className="h2">العملاء</h3>
+          {/* هتظهر شاشة العملاء من Customers.jsx عن طريق الروت /customers في نافذة منفصلة لو عايز */}
+          {/* أو نركّبها هنا لاحقًا كصفحة كاملة */}
+          <iframe title="customers" srcdoc="<style>body{margin:0;background:transparent}</style><div id='app'></div>" style={{display:'none'}}/>
+        </div>
+      )}
     </div>
   )
 }
-
-const inpt = {width:'100%',padding:10,marginTop:6,borderRadius:8,border:'1px solid #334155',background:'#0b1220',color:'#e5e7eb'}
-const btnGreen = {width:'100%',marginTop:14,padding:10,border:0,borderRadius:10,background:'#22c55e',color:'#052e16',fontWeight:700,cursor:'pointer'}
-const tabOff = {background:'#e5e7eb',border:0,borderRadius:8,padding:'8px 12px'}
-const tabOn  = {background:'#0ea5e9',color:'#fff',border:0,borderRadius:8,padding:'8px 12px'}
