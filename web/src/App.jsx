@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { apiFetch, fmtEGP } from './apiBase'
 import Customers from './Customers'
 import CustomerSelect from './CustomerSelect'
-import AdminDashboard from './Admin'
+import AdminDashboard from './AdminDashboard'
 import './ui.css'
 
 function Login({ onSuccess }) {
@@ -10,6 +10,7 @@ function Login({ onSuccess }) {
   const [password, setPassword] = useState('Admin@123')
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
+
   async function submit(e){
     e.preventDefault(); setErr(''); setLoading(true)
     try{
@@ -21,6 +22,7 @@ function Login({ onSuccess }) {
       onSuccess()
     }catch(e){ setErr(e.message) } finally { setLoading(false) }
   }
+
   return (
     <div style={{minHeight:'100vh',display:'grid',placeItems:'center',background:'var(--bg)'}}>
       <form onSubmit={submit} className="card" style={{minWidth:360}}>
@@ -56,7 +58,12 @@ export default function App(){
     setUser(()=>{ try{return JSON.parse(localStorage.getItem('hf_user')||'null')}catch{return null}})
   }, [authed])
 
-  function logout(){ localStorage.removeItem('hf_token'); localStorage.removeItem('hf_user'); setAuthed(false); setUser(null) }
+  function logout(){
+    localStorage.removeItem('hf_token')
+    localStorage.removeItem('hf_user')
+    setAuthed(false)
+    setUser(null)
+  }
 
   async function saveInvoice(e){
     e.preventDefault()
@@ -65,9 +72,17 @@ export default function App(){
     const res = await apiFetch('/invoices', { method:'POST', body: JSON.stringify(payload) })
     if(!res.ok){ const t=await res.json().catch(()=>({})); alert(t.error||'فشل الحفظ'); return }
     const data = await res.json()
-    setInvoices(v=>[...v, data]); setCust(null); setAmount(''); setBranchCode(''); setDeliveryDate(''); setAddress(''); setImageData('')
+    setInvoices(v=>[...v, data])
+    setCust(null); setAmount(''); setBranchCode(''); setDeliveryDate(''); setAddress(''); setImageData('')
   }
-  function onPickImage(e){ const f=e.target.files?.[0]; if(!f) return setImageData(''); const r=new FileReader(); r.onload=ev=>setImageData(ev.target.result); r.readAsDataURL(f) }
+
+  function onPickImage(e){
+    const f=e.target.files?.[0]
+    if(!f) return setImageData('')
+    const r=new FileReader()
+    r.onload=ev=>setImageData(ev.target.result)
+    r.readAsDataURL(f)
+  }
 
   if(!authed) return <Login onSuccess={()=>setAuthed(true)} />
 
@@ -101,7 +116,8 @@ export default function App(){
 
           <div className="card" style={{marginTop:12}}>
             <h3 className="h2">آخر الفواتير</h3>
-            <table className="table"><thead><tr><th>الكود</th><th>العميل</th><th>المبلغ</th><th>التاريخ</th></tr></thead>
+            <table className="table">
+              <thead><tr><th>الكود</th><th>العميل</th><th>المبلغ</th><th>التاريخ</th></tr></thead>
               <tbody>
                 {invoices.map(inv=>(
                   <tr key={inv.id}><td>{inv.code}</td><td>{inv.customer||'—'}</td><td>{fmtEGP(inv.amount)}</td><td>{new Date(inv.createdAt).toLocaleDateString('en-CA')}</td></tr>
@@ -114,8 +130,7 @@ export default function App(){
       )}
 
       {tab==='customers' && <div className="card"><h3 className="h2">العملاء</h3><Customers/></div>}
-
-      {tab==='admin' && isAdmin && <AdminDashboard/>}{tab==='admin' && isAdmin && <AdminDashboard/>}{tab==='admin' && isAdmin && <AdminDashboard/>}{tab==='admin' && isAdmin && <AdminDashboard/>}{tab==='admin' && isAdmin && <AdminDashboard/>} isAdmin {tab==='admin' && isAdmin && <AdminDashboard/>}{tab==='admin' && isAdmin && <AdminDashboard/>} <AdminDashboard/>} isAdmin {tab==='admin' && isAdmin && <AdminDashboard/>}{tab==='admin' && isAdmin && <AdminDashboard/>} <AdminDashboard/>} isAdmin {tab==='admin' && isAdmin && <AdminDashboard/>}{tab==='admin' && isAdmin && <AdminDashboard/>} <AdminDashboard/>} isAdmin {tab==='admin' && isAdmin && <AdminDashboard/>}{tab==='admin' && isAdmin && <AdminDashboard/>} <AdminDashboard/>}
+      {tab==='admin' && isAdmin && <AdminDashboard/>}
     </div>
   )
 }
