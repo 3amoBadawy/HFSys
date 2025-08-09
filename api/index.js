@@ -1,4 +1,5 @@
 import express from 'express'
+import metaRouter from './meta.js'
 import productsRouter from './products.js'
 import cors from 'cors'
 import fs from 'fs'
@@ -177,3 +178,4 @@ app.use('/', auth, router)
 app.use('/', auth, customersRouter)
 
 app.listen(PORT, ()=> console.log('API running on http://localhost:'+PORT))
+app.use('/', auth, metaRouter);
