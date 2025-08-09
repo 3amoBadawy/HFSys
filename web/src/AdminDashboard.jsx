@@ -10,7 +10,7 @@ export default function AdminDashboard(){
   useEffect(()=>{
     (async()=>{
       try{
-        // لو المستخدم معندوش صلاحية manage_users، /roles هترجع 403
+        // لو معندكش صلاحية manage_users السيرفر بيرجع 403
         const r = await apiFetch('/roles')
         setCanManageUsers(r.ok)
       }catch{ setCanManageUsers(false) }

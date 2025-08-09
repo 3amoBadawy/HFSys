@@ -7,8 +7,7 @@ export default function AdminRoles(){
   const [q,setQ]=useState('')
   const [form,setForm]=useState({ name:'', permissions:[] })
   const [editName,setEditName]=useState(null)
-  const [msg,setMsg]=useState('')
-  const [err,setErr]=useState('')
+  const [msg,setMsg]=useState(''); const [err,setErr]=useState('')
 
   async function load(){
     setErr(''); setMsg('')
@@ -25,16 +24,9 @@ export default function AdminRoles(){
   },[roles,q])
 
   function togglePerm(p){
-    setForm(f=>{
-      const has = f.permissions.includes(p)
-      return { ...f, permissions: has ? f.permissions.filter(x=>x!==p) : [...f.permissions,p] }
-    })
+    setForm(f=>({...f, permissions: f.permissions.includes(p) ? f.permissions.filter(x=>x!==p) : [...f.permissions,p]}))
   }
-  function startEdit(r){
-    setEditName(r.name)
-    setForm({ name:r.name, permissions:[...(r.permissions||[])] })
-    window.scrollTo({top:0,behavior:'smooth'})
-  }
+  function startEdit(r){ setEditName(r.name); setForm({ name:r.name, permissions:[...(r.permissions||[])] }); window.scrollTo({top:0,behavior:'smooth'}) }
   function reset(){ setEditName(null); setForm({ name:'', permissions:[] }); setMsg(''); setErr('') }
 
   async function save(e){
@@ -47,7 +39,7 @@ export default function AdminRoles(){
       res = await apiFetch('/roles', { method:'POST', body: JSON.stringify({ name:form.name.trim(), permissions: form.permissions }) })
     }
     if(!res.ok){ const t=await res.json().catch(()=>({})); setErr(t.error||'خطأ في الحفظ'); return }
-    await load(); reset(); setMsg('تم الحفظ بنجاح')
+    await load(); reset(); setMsg('تم الحفظ')
   }
 
   async function del(name){
@@ -58,8 +50,8 @@ export default function AdminRoles(){
   }
 
   return (
-    <div className="card">
-      <h3 className="h2">إدارة الأدوار والصلاحيات</h3>
+    <div>
+      <h3 className="h2">الأدوار والصلاحيات</h3>
       {msg && <div className="muted">{msg}</div>}
       {err && <div style={{color:'#fca5a5'}}>{err}</div>}
 
@@ -98,7 +90,7 @@ export default function AdminRoles(){
           )) : <tr><td colSpan={3} className="muted">لا توجد أدوار</td></tr>}
         </tbody>
       </table>
-      <p className="muted" style={{marginTop:8}}>ملاحظة: لا يمكن حذف دور مستخدم في قيد الاستخدام، ولا يمكن حذف/إعادة تسمية دور admin.</p>
+      <p className="muted" style={{marginTop:8}}>ملاحظة: لا يمكن حذف/إعادة تسمية دور admin، ولا حذف دور مستخدم عليه موظفين.</p>
     </div>
   )
 }
