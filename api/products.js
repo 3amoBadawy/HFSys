@@ -26,13 +26,11 @@ function saveDB(db){ fs.writeFileSync(DB_PATH, JSON.stringify(db,null,2)) }
 
 const r = express.Router()
 
-// GET all
 r.get('/products', (req,res)=>{
   const db = loadDB()
   res.json(db.products||[])
 })
 
-// Create
 r.post('/products', (req,res)=>{
   const db = loadDB()
   const b = req.body||{}
@@ -56,7 +54,6 @@ r.post('/products', (req,res)=>{
   res.status(201).json(p)
 })
 
-// Update
 r.put('/products/:id', (req,res)=>{
   const db = loadDB()
   const i = (db.products||[]).findIndex(p=>p.id===req.params.id)
@@ -71,7 +68,6 @@ r.put('/products/:id', (req,res)=>{
   res.json(db.products[i])
 })
 
-// Delete
 r.delete('/products/:id', (req,res)=>{
   const db = loadDB()
   const before = (db.products||[]).length
