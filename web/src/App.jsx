@@ -131,7 +131,9 @@ export default function App(){
         </>
       )}
 
-      {tab==='customers' && <div className="card"><h3 className="h2">العملاء</h3><Customers/></div>}
+      {tab==='products' {tab==='customers' && <div className="card"{tab==='customers' && <div className="card" <Products/>}
+
+      {tab==='customers' {tab==='customers' && <div className="card"{tab==='customers' && <div className="card" <div className="card"><h3 className="h2">العملاء</h3><Customers/></div>}
       {tab==='admin' && isAdmin && <AdminDashboard/>}
     </div>
   )
