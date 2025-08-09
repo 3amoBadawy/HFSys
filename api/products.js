@@ -4,16 +4,18 @@ import { nanoid } from 'nanoid';
 
 const DB_PATH = './db.json';
 
-function loadDB(){
-  if (!fs.existsSync(DB_PATH)){
+function loadDB() {
+  if (!fs.existsSync(DB_PATH)) {
     fs.writeFileSync(DB_PATH, JSON.stringify({
-      invoices: [], customers: [], products: [],
+      invoices: [], products: [], customers: [],
       roles: [
-        { name: 'admin', permissions: ['manage_users','view_users','manage_invoices','add_invoice','view_reports','settings_access','manage_products','view_products'] },
-        { name: 'manager', permissions: ['manage_invoices','view_reports','view_users','view_products'] },
-        { name: 'staff', permissions: ['add_invoice','view_products'] }
+        { name: 'admin', permissions: ['manage_users','view_users','manage_invoices','add_invoice','view_reports','settings_access'] },
+        { name: 'manager', permissions: ['manage_invoices','view_reports','view_users'] },
+        { name: 'staff', permissions: ['add_invoice'] }
       ],
-      users: [{ id:'seed-admin', name:'Admin', email:'admin@highfurniture.com', role:'admin', active:true }],
+      users: [
+        { id: 'seed-admin', name: 'Admin', email: 'admin@highfurniture.com', role: 'admin', active: true }
+      ],
       lastSeq: 0
     }, null, 2));
   }
@@ -29,22 +31,53 @@ router.get('/products', (req, res) => {
   res.json(db.products || []);
 });
 
-// POST /products  { name, sku, price }
+// POST /products
 router.post('/products', (req, res) => {
   const db = loadDB();
-  const { name = '', sku = '', price = 0 } = req.body || {};
-  if (!name.trim()) return res.status(400).json({ error: 'name required' });
+  const body = req.body || {};
+  if (!body.name) return res.status(400).json({ error: 'name required' });
   const product = {
     id: nanoid(),
-    name: name.trim(),
-    sku: (sku || '').trim(),
-    price: Number(price) || 0,
+    name: String(body.name).trim(),
+    sku: (body.sku ?? '').toString().trim(),
+    price: Number(body.price || 0),
+    stock: Number(body.stock || 0),
+    notes: (body.notes ?? '').toString(),
+    imageData: body.imageData || '',
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
   db.products = db.products || [];
   db.products.push(product);
   saveDB(db);
   res.status(201).json(product);
+});
+
+// PATCH /products/:id
+router.patch('/products/:id', (req, res) => {
+  const db = loadDB();
+  const idx = (db.products || []).findIndex(p => p.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  const update = req.body || {};
+  db.products[idx] = {
+    ...db.products[idx],
+    ...update,
+    price: update.price !== undefined ? Number(update.price) : db.products[idx].price,
+    stock: update.stock !== undefined ? Number(update.stock) : db.products[idx].stock,
+    updatedAt: new Date().toISOString()
+  };
+  saveDB(db);
+  res.json(db.products[idx]);
+});
+
+// DELETE /products/:id
+router.delete('/products/:id', (req, res) => {
+  const db = loadDB();
+  const before = (db.products || []).length;
+  db.products = (db.products || []).filter(p => p.id !== req.params.id);
+  if (db.products.length === before) return res.status(404).json({ error: 'Not found' });
+  saveDB(db);
+  res.json({ ok: true });
 });
 
 export default router;

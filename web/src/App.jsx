@@ -132,8 +132,12 @@ export default function App(){
       )}
 
       {tab==='products' {tab==='customers' && <div className="card"{tab==='customers' && <div className="card" <Products/>}
+n      {tab==='products' && <div className="card"><h3 className="h2">المنتجات</h3><Products/></div>}
+
 
       {tab==='customers' {tab==='customers' && <div className="card"{tab==='customers' && <div className="card" <div className="card"><h3 className="h2">العملاء</h3><Customers/></div>}
+n      {tab==='products' && <div className="card"><h3 className="h2">المنتجات</h3><Products/></div>}
+
       {tab==='admin' && isAdmin && <AdminDashboard/>}
     </div>
   )
