@@ -3,20 +3,29 @@ import fs from 'fs'
 import { nanoid } from 'nanoid'
 
 const DB_PATH = './db.json'
+
 function loadDB(){
   if(!fs.existsSync(DB_PATH)){
     fs.writeFileSync(DB_PATH, JSON.stringify({
       invoices:[], products:[], customers:[],
       roles:[
-        { name:'admin',   permissions:['manage_users','view_users','manage_invoices','add_invoice','view_reports','settings_access','view_products','manage_products','view_customers','manage_customers'] },
-        { name:'manager', permissions:['view_users','manage_invoices','view_reports','view_products','manage_products','view_customers','manage_customers'] },
-        { name:'staff',   permissions:['add_invoice','view_users','view_customers'] }
+        { name:'admin', permissions:[
+          'manage_users','view_users',
+          'manage_invoices','add_invoice','view_reports','settings_access',
+          'view_products','manage_products',
+          'view_customers','manage_customers'
+        ]},
+        { name:'manager', permissions:[
+          'view_users','manage_invoices','view_reports',
+          'view_products','manage_products','view_customers','manage_customers'
+        ]},
+        { name:'staff', permissions:['add_invoice','view_users','view_customers'] }
       ],
       users:[{ id:'u-admin', name:'Admin', email:'admin@highfurniture.com', role:'admin', active:true }],
       lastSeq:0, lastProd:0, lastCust:0
     }, null, 2))
   }
-  return JSON.parse(fs.readFileSync(DB_PATH,'utf-8'))
+  return JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'))
 }
 function saveDB(db){ fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)) }
 
@@ -28,7 +37,7 @@ function hasPerm(db, role, perm){
 
 const r = express.Router()
 
-// DEBUG middleware: يطبع كل طلبات العملاء
+// DEBUG
 r.use((req,res,next)=>{
   console.log(`[customers] ${req.method} ${req.path} q=${JSON.stringify(req.query)} body=${JSON.stringify(req.body||{})}`)
   next()
@@ -67,7 +76,10 @@ r.post('/customers', (req,res)=>{
   if(!name) return res.status(400).json({ error:'name required' })
 
   db.lastCust = (db.lastCust||0) + 1
-  const c = { id: nanoid(), name, phone, address, notes, createdAt:new Date().toISOString(), active:true, code:'CUST-'+String(db.lastCust).padStart(5,'0') }
+  const c = {
+    id: nanoid(), code:'CUST-'+String(db.lastCust).padStart(5,'0'),
+    name, phone, address, notes, active:true, createdAt:new Date().toISOString()
+  }
   db.customers = db.customers || []
   db.customers.push(c); saveDB(db)
   console.log(`[customers] created ${c.id}`)
