@@ -55,6 +55,7 @@ router.get('/invoices/:id', (req,res)=>{
   if(!inv) return res.status(404).json({ error:'Not found' });
   res.json(inv);
 });
+app.get("/", (req,res)=> res.send("HF API is live ✅"));
 app.use('/', auth, router);
 
 app.listen(PORT, ()=> console.log('API running on http://localhost:' + PORT));
