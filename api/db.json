@@ -1,27 +1,16 @@
 {
-  "invoices": [
+  "invoices": [],
+  "lastSeq": 0,
+  "customers": [],
+  "users": [
     {
-      "id": "dZPCAZNbVoS0wurShsxum",
-      "code": "INV-00001",
-      "createdAt": "2025-08-09T17:18:42.993Z",
-      "customer": "1",
-      "amount": 1,
-      "branchCode": "2",
-      "deliveryDate": "",
-      "address": "2",
-      "imageData": ""
-    },
-    {
-      "id": "oz3ncL2MX4uhiMpemwwhz",
-      "code": "INV-00002",
-      "createdAt": "2025-08-09T17:18:47.102Z",
-      "customer": "1",
-      "amount": 1,
-      "branchCode": "",
-      "deliveryDate": "",
-      "address": "",
-      "imageData": ""
+      "id": "seed-admin",
+      "name": "Admin",
+      "email": "admin@highfurniture.com",
+      "password": "Admin@123",
+      "role": "admin",
+      "active": true,
+      "createdAt": "2025-08-09T00:00:00Z"
     }
-  ],
-  "lastSeq": 2
+  ]
 }
