@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { apiFetch } from './apiBase'
+import { apiFetch, fmtEGP } from './apiBase'
 import Customers from './Customers'
+import CustomerSelect from './CustomerSelect'
 import './ui.css'
 
 function Login({ onSuccess }) {
@@ -23,12 +24,8 @@ function Login({ onSuccess }) {
     <div style={{minHeight:'100vh',display:'grid',placeItems:'center',background:'var(--bg)'}}>
       <form onSubmit={submit} className="card" style={{minWidth:360}}>
         <h2 className="h1" style={{textAlign:'center'}}>تسجيل الدخول</h2>
-        <label>البريد الإلكتروني
-          <input className="input" value={email} onChange={e=>setEmail(e.target.value)} required/>
-        </label>
-        <label style={{display:'block',marginTop:10}}>كلمة المرور
-          <input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>
-        </label>
+        <label>البريد الإلكتروني <input className="input" value={email} onChange={e=>setEmail(e.target.value)} required/></label>
+        <label style={{display:'block',marginTop:10}}>كلمة المرور <input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} required/></label>
         {err && <div style={{color:'#fca5a5',fontSize:13,marginTop:8}}>{err}</div>}
         <button disabled={loading} className="btn btn-green" style={{width:'100%',marginTop:12}}>
           {loading ? 'جاري الدخول...' : 'دخول'}
@@ -42,7 +39,9 @@ export default function App(){
   const [authed, setAuthed] = useState(!!localStorage.getItem('hf_token'))
   const [tab, setTab] = useState('sales')
   const [invoices, setInvoices] = useState([])
-  const [selectedCustomer, setSelectedCustomer] = useState(null)
+
+  // نموذج المبيعات
+  const [cust, setCust] = useState(null)
   const [amount, setAmount] = useState('')
   const [branchCode, setBranchCode] = useState('')
   const [deliveryDate, setDeliveryDate] = useState('')
@@ -58,18 +57,19 @@ export default function App(){
 
   async function saveInvoice(e){
     e.preventDefault()
+    if(!cust){ alert('من فضلك اختر عميل'); return }
     const payload = {
-      customer: selectedCustomer?.name || '',
-      customerId: selectedCustomer?.id || null,
+      customerId: cust.id,
+      customer: cust.name,
       amount: parseFloat(amount||0),
       branchCode, deliveryDate, address, imageData
     }
     const res = await apiFetch('/invoices', { method:'POST', body: JSON.stringify(payload) })
-    if(!res.ok){ alert('فشل الحفظ'); return }
+    if(!res.ok){ const t=await res.json().catch(()=>({})); alert(t.error||'فشل الحفظ'); return }
     const data = await res.json()
     setInvoices(v=>[...v, data])
-    setSelectedCustomer(null); setAmount(''); setBranchCode(''); setDeliveryDate(''); setAddress(''); setImageData('')
-    alert('تم حفظ الفاتورة: ' + data.code)
+    // reset
+    setCust(null); setAmount(''); setBranchCode(''); setDeliveryDate(''); setAddress(''); setImageData('')
   }
 
   function onPickImage(e){
@@ -96,7 +96,7 @@ export default function App(){
             <form onSubmit={saveInvoice} className="grid">
               <div>
                 <label className="muted">العميل</label>
-                {/* هنركّب CustomerSelect بعدين لما ندمجه؛ مؤقتًا نكتبه يدوي أو نستخدم كومبوننت الاختيار */}
+                <CustomerSelect value={cust} onChange={setCust} placeholder="اختر عميل بالاسم/الهاتف" />
               </div>
               <div className="grid grid-2">
                 <div>
@@ -128,14 +128,16 @@ export default function App(){
             <h3 className="h2">آخر الفواتير</h3>
             <table className="table">
               <thead>
-                <tr><th>الكود</th><th>العميل</th><th>المبلغ</th><th>التاريخ</th></tr>
+                <tr>
+                  <th>الكود</th><th>العميل</th><th>المبلغ</th><th>التاريخ</th>
+                </tr>
               </thead>
               <tbody>
                 {invoices.map(inv=>(
                   <tr key={inv.id}>
                     <td>{inv.code}</td>
                     <td>{inv.customer || '—'}</td>
-                    <td>{inv.amount} ج.م</td>
+                    <td>{fmtEGP(inv.amount)}</td>
                     <td>{new Date(inv.createdAt).toLocaleDateString('en-CA')}</td>
                   </tr>
                 ))}

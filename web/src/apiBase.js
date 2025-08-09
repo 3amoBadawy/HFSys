@@ -10,3 +10,4 @@ export function apiFetch(path, opts = {}) {
     }
   });
 }
+export const fmtEGP = (n)=> new Intl.NumberFormat('ar-EG',{style:'currency',currency:'EGP',maximumFractionDigits:2}).format(+n||0)
