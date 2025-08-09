@@ -1,20 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import { apiFetch } from './apiBase'
+import Customers from './Customers'
 
 function Login({ onSuccess }) {
   const [email, setEmail] = useState('admin@highfurniture.com')
   const [password, setPassword] = useState('Admin@123')
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
-
   async function submit(e){
-    e.preventDefault()
-    setErr(''); setLoading(true)
+    e.preventDefault(); setErr(''); setLoading(true)
     try{
-      const res = await apiFetch('/login', {
-        method:'POST',
-        body: JSON.stringify({ email, password })
-      })
+      const res = await apiFetch('/login', { method:'POST', body: JSON.stringify({ email, password }) })
       if(!res.ok){ const t = await res.json().catch(()=>({error:'خطأ'})); throw new Error(t.error||'فشل تسجيل الدخول') }
       const data = await res.json()
       localStorage.setItem('hf_token', data.token)
@@ -22,17 +18,14 @@ function Login({ onSuccess }) {
       onSuccess()
     }catch(e){ setErr(e.message) } finally { setLoading(false) }
   }
-
   return (
     <div style={{minHeight:'100vh',display:'grid',placeItems:'center',background:'#0f172a'}}>
       <form onSubmit={submit} style={{background:'rgba(17,24,39,.95)', padding:20, borderRadius:12, minWidth:320, color:'#e5e7eb', border:'1px solid #1f2937'}}>
         <h2 style={{marginTop:0, textAlign:'center'}}>تسجيل الدخول</h2>
-        <label>البريد الإلكتروني<input value={email} onChange={e=>setEmail(e.target.value)} required style={{width:'100%',padding:10,marginTop:6,borderRadius:8,border:'1px solid #334155',background:'#0b1220',color:'#e5e7eb'}}/></label>
-        <label style={{display:'block',marginTop:10}}>كلمة المرور<input type="password" value={password} onChange={e=>setPassword(e.target.value)} required style={{width:'100%',padding:10,marginTop:6,borderRadius:8,border:'1px solid #334155',background:'#0b1220',color:'#e5e7eb'}}/></label>
+        <label>البريد الإلكتروني<input value={email} onChange={e=>setEmail(e.target.value)} required style={inpt}/></label>
+        <label style={{display:'block',marginTop:10}}>كلمة المرور<input type="password" value={password} onChange={e=>setPassword(e.target.value)} required style={inpt}/></label>
         {err && <div style={{color:'#fca5a5',fontSize:13,marginTop:8}}>{err}</div>}
-        <button disabled={loading} style={{width:'100%',marginTop:14,padding:10,border:0,borderRadius:10,background:'#22c55e',color:'#052e16',fontWeight:700,cursor:'pointer'}}>
-          {loading ? 'جاري الدخول...' : 'دخول'}
-        </button>
+        <button disabled={loading} style={btnGreen}>{loading ? 'جاري الدخول...' : 'دخول'}</button>
       </form>
     </div>
   )
@@ -40,6 +33,7 @@ function Login({ onSuccess }) {
 
 export default function App(){
   const [authed, setAuthed] = useState(!!localStorage.getItem('hf_token'))
+  const [tab, setTab] = useState('sales')
   const [invoices, setInvoices] = useState([])
   const [customer, setCustomer] = useState('')
   const [amount, setAmount] = useState('')
@@ -67,11 +61,8 @@ export default function App(){
   }
 
   function onPickImage(e){
-    const f = e.target.files?.[0]
-    if(!f) return setImageData('')
-    const reader = new FileReader()
-    reader.onload = ev => setImageData(ev.target.result)
-    reader.readAsDataURL(f)
+    const f = e.target.files?.[0]; if(!f) return setImageData('')
+    const reader = new FileReader(); reader.onload = ev => setImageData(ev.target.result); reader.readAsDataURL(f)
   }
 
   if(!authed) return <Login onSuccess={()=>setAuthed(true)} />
@@ -79,29 +70,42 @@ export default function App(){
   return (
     <div style={{padding:16, fontFamily:'system-ui'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-        <h2>لوحة المبيعات</h2>
+        <div style={{display:'flex', gap:8}}>
+          <button onClick={()=>setTab('sales')} style={tab==='sales'?tabOn:tabOff}>المبيعات</button>
+          <button onClick={()=>setTab('customers')} style={tab==='customers'?tabOn:tabOff}>العملاء</button>
+        </div>
         <button onClick={logout} style={{background:'#ef4444',border:0,color:'#fff',borderRadius:8,padding:'8px 12px'}}>تسجيل الخروج</button>
       </div>
 
-      <form onSubmit={saveInvoice} style={{display:'grid', gap:8, maxWidth:420}}>
-        <label>اسم العميل<input value={customer} onChange={e=>setCustomer(e.target.value)} required/></label>
-        <label>المبلغ<input type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} required/></label>
-        <label>رقم الفاتورة (الفرع)<input value={branchCode} onChange={e=>setBranchCode(e.target.value)} /></label>
-        <label>تاريخ التسليم<input type="date" value={deliveryDate} onChange={e=>setDeliveryDate(e.target.value)} /></label>
-        <label>عنوان التسليم<input value={address} onChange={e=>setAddress(e.target.value)} /></label>
-        <label>صورة الفاتورة<input type="file" accept="image/*" onChange={onPickImage} /></label>
-        <button>حفظ</button>
-      </form>
+      {tab==='sales' && (
+        <>
+          <form onSubmit={saveInvoice} style={{display:'grid', gap:8, maxWidth:420}}>
+            <label>اسم العميل<input value={customer} onChange={e=>setCustomer(e.target.value)} required/></label>
+            <label>المبلغ<input type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} required/></label>
+            <label>رقم الفاتورة (الفرع)<input value={branchCode} onChange={e=>setBranchCode(e.target.value)} /></label>
+            <label>تاريخ التسليم<input type="date" value={deliveryDate} onChange={e=>setDeliveryDate(e.target.value)} /></label>
+            <label>عنوان التسليم<input value={address} onChange={e=>setAddress(e.target.value)} /></label>
+            <label>صورة الفاتورة<input type="file" accept="image/*" onChange={onPickImage} /></label>
+            <button>حفظ</button>
+          </form>
 
-      <h3 style={{marginTop:24}}>آخر الفواتير</h3>
-      <ul>
-        {invoices.map(inv => (
-          <li key={inv.id}>
-            {inv.code} — {inv.customer} — {inv.amount} ج.م — {new Date(inv.createdAt).toLocaleDateString('en-CA')}
-          </li>
-        ))}
-      </ul>
-      <p style={{opacity:.7}}>متصل بالـ API على Render.</p>
+          <h3 style={{marginTop:24}}>آخر الفواتير</h3>
+          <ul>
+            {invoices.map(inv => (
+              <li key={inv.id}>
+                {inv.code} — {inv.customer} — {inv.amount} ج.م — {new Date(inv.createdAt).toLocaleDateString('en-CA')}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {tab==='customers' && <Customers/>}
     </div>
   )
 }
+
+const inpt = {width:'100%',padding:10,marginTop:6,borderRadius:8,border:'1px solid #334155',background:'#0b1220',color:'#e5e7eb'}
+const btnGreen = {width:'100%',marginTop:14,padding:10,border:0,borderRadius:10,background:'#22c55e',color:'#052e16',fontWeight:700,cursor:'pointer'}
+const tabOff = {background:'#e5e7eb',border:0,borderRadius:8,padding:'8px 12px'}
+const tabOn  = {background:'#0ea5e9',color:'#fff',border:0,borderRadius:8,padding:'8px 12px'}
