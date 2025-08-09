@@ -25,13 +25,11 @@ function saveDB(db){ fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); }
 
 const router = express.Router();
 
-// GET /products
 router.get('/products', (req, res) => {
   const db = loadDB();
   res.json(db.products || []);
 });
 
-// POST /products
 router.post('/products', (req, res) => {
   const db = loadDB();
   const body = req.body || {};
@@ -53,7 +51,6 @@ router.post('/products', (req, res) => {
   res.status(201).json(product);
 });
 
-// PATCH /products/:id
 router.patch('/products/:id', (req, res) => {
   const db = loadDB();
   const idx = (db.products || []).findIndex(p => p.id === req.params.id);
@@ -70,7 +67,6 @@ router.patch('/products/:id', (req, res) => {
   res.json(db.products[idx]);
 });
 
-// DELETE /products/:id
 router.delete('/products/:id', (req, res) => {
   const db = loadDB();
   const before = (db.products || []).length;

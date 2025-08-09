@@ -53,8 +53,7 @@ export default function Products(){
   const filtered = items.filter(x=>{
     if(!q) return true
     const t = (q||'').toLowerCase()
-    return (x.name||'').toLowerCase().includes(t) ||
-           (x.sku||'').toLowerCase().includes(t)
+    return (x.name||'').toLowerCase().includes(t) || (x.sku||'').toLowerCase().includes(t)
   })
 
   return (
@@ -85,7 +84,10 @@ export default function Products(){
           <tbody>
             {filtered.map(p=>(
               <tr key={p.id}>
-                <td>{p.name}</td><td>{p.sku||'—'}</td><td>{Number(p.price||0).toLocaleString('en-EG',{style:'currency',currency:'EGP'})}</td><td>{p.stock??0}</td>
+                <td>{p.name}</td>
+                <td>{p.sku || '—'}</td>
+                <td>{Number(p.price||0).toLocaleString('en-EG',{style:'currency',currency:'EGP'})}</td>
+                <td>{p.stock ?? 0}</td>
                 <td><button className="btn btn-red" onClick={()=>remove(p.id)}>حذف</button></td>
               </tr>
             ))}
