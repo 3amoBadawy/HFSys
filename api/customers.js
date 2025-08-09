@@ -119,7 +119,9 @@ r.delete('/customers/:id', (req,res)=>{
   const before = (db.customers||[]).length
   db.customers = (db.customers||[]).filter(x=>x.id!==req.params.id)
   saveDB(db)
-  console.log(`[customers] deleted ${req.params.id} (before=${before} after=${db.customers.length})`)
+  console.log(
+    `[customers] deleted ${req.params.id} (before=${before} after=${db.customers.length})`
+  )
   res.json({ ok:true })
 })
 
