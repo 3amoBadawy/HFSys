@@ -115,7 +115,7 @@ export default function App(){
 
       {tab==='customers' && <div className="card"><h3 className="h2">العملاء</h3><Customers/></div>}
 
-      {tab==='admin' {tab==='admin' && isAdmin && <AdminDashboard/>}{tab==='admin' {tab==='admin' && isAdmin && <AdminUsers/>}{tab==='admin' && isAdmin && <AdminUsers/>} isAdmin {tab==='admin' && isAdmin && <AdminUsers/>}{tab==='admin' && isAdmin && <AdminUsers/>} <AdminDashboard/>} isAdmin {tab==='admin' && isAdmin && <AdminUsers/>}{tab==='admin' && isAdmin && <AdminUsers/>} <AdminDashboard/>}
+      {tab==='admin' {tab==='admin' && isAdmin && <AdminDashboard/>}{tab==='admin' {tab==='admin' && isAdmin && <AdminDashboard/>}{tab==='admin' {tab==='admin' && isAdmin && <AdminUsers/>}{tab==='admin' && isAdmin && <AdminUsers/>} isAdmin {tab==='admin' && isAdmin && <AdminUsers/>}{tab==='admin' && isAdmin && <AdminUsers/>} <AdminDashboard/>} isAdmin {tab==='admin' && isAdmin && <AdminUsers/>}{tab==='admin' && isAdmin && <AdminUsers/>} <AdminDashboard/>} isAdmin {tab==='admin' && isAdmin && <AdminUsers/>}{tab==='admin' && isAdmin && <AdminUsers/>} <AdminDashboard/>}
     </div>
   )
 }
