@@ -1,4 +1,5 @@
 import express from 'express'
+import productsRouter from './products.js'
 import cors from 'cors'
 import fs from 'fs'
 import { nanoid } from 'nanoid'
