@@ -1,4 +1,5 @@
 import express from 'express'
+import customersRouter from './customers.js'
 import productsRouter from './products.js'
 import cors from 'cors'
 import fs from 'fs'
@@ -18,11 +19,11 @@ function loadDB(){
         { id:'admin', name:'Admin', email:'admin@highfurniture.com', password:'Admin@123', role:'admin', active:true }
       ],
       roles: [
-        { name:'admin',   permissions:['manage_users','view_users','manage_invoices','add_invoice','view_reports','settings_access'] },
+        { name:'admin',   permissions:['manage_users','view_users','manage_invoices','add_invoice','view_reports','settings_access','view_customers','manage_customers'] },
         { name:'manager', permissions:['view_users','manage_invoices','view_reports'] },
         { name:'staff',   permissions:['add_invoice'] }
       ],
-      perms: ['manage_users','view_users','manage_invoices','add_invoice','view_reports','settings_access']
+      perms: ['manage_users','view_users','manage_invoices','add_invoice','view_reports','settings_access','view_customers','manage_customers']
     }
     fs.writeFileSync(DB_PATH, JSON.stringify(seed, null, 2))
   }
