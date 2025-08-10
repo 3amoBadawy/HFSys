@@ -1,10 +1,17 @@
+import { safeArray, logIfNotArray } from './util'
 import React, { useEffect, useState } from 'react'
 import { apiFetch, fmtEGP } from './apiBase'
 import Customers from './Customers'
 import CustomerSelect from './CustomerSelect'
-import AdminDashboard from './AdminDashboard'
 import Products from './Products'
+import AdminDashboard from './AdminDashboard'
 import './ui.css'
+logIfNotArray("items", items);
+logIfNotArray("users", users);
+logIfNotArray("roles", roles);
+logIfNotArray("invoices", invoices);
+logIfNotArray("customers", customers);
+logIfNotArray("products", products);
 
 function Login({ onSuccess }) {
   const [email, setEmail] = useState('admin@highfurniture.com')
@@ -55,11 +62,16 @@ export default function App(){
 
   useEffect(()=>{
     if(!authed) return
-    apiFetch('/invoices').then(r=>r.json()).then(a=>Array.isArray(a)?setInvoices(a):setInvoices([])).catch(()=>{})
+    apiFetch('/invoices').then(r=>r.json()).then(setInvoices).catch(()=>{})
     setUser(()=>{ try{return JSON.parse(localStorage.getItem('hf_user')||'null')}catch{return null}})
   }, [authed])
 
-  function logout(){ localStorage.removeItem('hf_token'); localStorage.removeItem('hf_user'); setAuthed(false); setUser(null) }
+  function logout(){
+    localStorage.removeItem('hf_token')
+    localStorage.removeItem('hf_user')
+    setAuthed(false)
+    setUser(null)
+  }
 
   async function saveInvoice(e){
     e.preventDefault()
@@ -68,9 +80,17 @@ export default function App(){
     const res = await apiFetch('/invoices', { method:'POST', body: JSON.stringify(payload) })
     if(!res.ok){ const t=await res.json().catch(()=>({})); alert(t.error||'فشل الحفظ'); return }
     const data = await res.json()
-    setInvoices(v=>[...v, data]); setCust(null); setAmount(''); setBranchCode(''); setDeliveryDate(''); setAddress(''); setImageData('')
+    setInvoices(v=>[...v, data])
+    setCust(null); setAmount(''); setBranchCode(''); setDeliveryDate(''); setAddress(''); setImageData('')
   }
-  function onPickImage(e){ const f=e.target.files?.[0]; if(!f) return setImageData(''); const r=new FileReader(); r.onload=ev=>setImageData(ev.target.result); r.readAsDataURL(f) }
+
+  function onPickImage(e){
+    const f=e.target.files?.[0]
+    if(!f) return setImageData('')
+    const r=new FileReader()
+    r.onload=ev=>setImageData(ev.target.result)
+    r.readAsDataURL(f)
+  }
 
   if(!authed) return <Login onSuccess={()=>setAuthed(true)} />
 
@@ -81,7 +101,7 @@ export default function App(){
           <button onClick={()=>setTab('sales')} className={'tab '+(tab==='sales'?'active':'')}>المبيعات</button>
           <button onClick={()=>setTab('customers')} className={'tab '+(tab==='customers'?'active':'')}>العملاء</button>
           <button onClick={()=>setTab('products')} className={'tab '+(tab==='products'?'active':'')}>المنتجات</button>
-          {isAdmin && <button onClick={()=>setTab('admin')} className={'tab '+(tab==='admin'?'active':'')}>الإدارة</button>}
+          {(isAdmin || true) && <button onClick={()=>setTab('admin')} className={'tab '+(tab==='admin'?'active':'')}>الإدارة</button>}
         </div>
         <button onClick={logout} className="btn btn-red">تسجيل الخروج</button>
       </div>
@@ -105,9 +125,10 @@ export default function App(){
 
           <div className="card" style={{marginTop:12}}>
             <h3 className="h2">آخر الفواتير</h3>
-            <table className="table"><thead><tr><th>الكود</th><th>العميل</th><th>المبلغ</th><th>التاريخ</th></tr></thead>
+            <table className="table">
+              <thead><tr><th>الكود</th><th>العميل</th><th>المبلغ</th><th>التاريخ</th></tr></thead>
               <tbody>
-                {invoices.map(inv=>(
+                {safeArray(invoices).map(inv=>(
                   <tr key={inv.id}><td>{inv.code}</td><td>{inv.customer||'—'}</td><td>{fmtEGP(inv.amount)}</td><td>{new Date(inv.createdAt).toLocaleDateString('en-CA')}</td></tr>
                 ))}
                 {!invoices.length && <tr><td colSpan={4} className="muted">لا توجد فواتير بعد</td></tr>}
@@ -117,8 +138,13 @@ export default function App(){
         </>
       )}
 
-      {tab==='customers' && <div className="card"><h3 className="h2">العملاء</h3><Customers/></div>}
-      {tab==='products'  && <div className="card"><h3 className="h2">المنتجات</h3><Products/></div>}
+      {tab==='products' {tab==='customers' && <div className="card"{tab==='customers' && <div className="card" <Products/>}
+n      {tab==='products' && <div className="card"><h3 className="h2">المنتجات</h3><Products/></div>}
+
+
+      {tab==='customers' {tab==='customers' && <div className="card"{tab==='customers' && <div className="card" <div className="card"><h3 className="h2">العملاء</h3><Customers/></div>}
+n      {tab==='products' && <div className="card"><h3 className="h2">المنتجات</h3><Products/></div>}
+
       {tab==='admin' && isAdmin && <AdminDashboard/>}
     </div>
   )

@@ -1,0 +1,109 @@
+import React, { useEffect, useState } from 'react'
+import { apiFetch, fmtEGP } from './apiBase'
+import Customers from './Customers'
+import Products from './Products'
+import Admin from './Admin'
+
+function Login({ onSuccess }){
+  const [email,setEmail]=useState('admin@highfurniture.com')
+  const [password,setPassword]=useState('Admin@123')
+  const [loading,setLoading]=useState(false)
+  const [err,setErr]=useState('')
+  async function submit(e){
+    e.preventDefault(); setErr(''); setLoading(true)
+    try{
+      const r=await apiFetch('/login',{method:'POST',body:JSON.stringify({email,password})})
+      const d=await r.json().catch(()=>({}))
+      if(!r.ok) throw new Error(d.error||'فشل تسجيل الدخول')
+      localStorage.setItem('hf_token', d.token)
+      localStorage.setItem('hf_user', JSON.stringify(d.user||{}))
+      onSuccess()
+    }catch(e){ setErr(e.message||'خطأ') } finally{ setLoading(false) }
+  }
+  return (
+    <div style={{minHeight:'100vh',display:'grid',placeItems:'center',background:'#0b1220'}}>
+      <form onSubmit={submit} className="card" style={{minWidth:360,padding:16,background:'#0f172a',border:'1px solid #1e293b',borderRadius:12,color:'#e2e8f0'}}>
+        <h2 style={{textAlign:'center',margin:0}}>تسجيل الدخول</h2>
+        <label style={{display:'block',marginTop:8}}>البريد الإلكتروني
+          <input className="input" value={email} onChange={e=>setEmail(e.target.value)} required style={{width:'100%'}}/>
+        </label>
+        <label style={{display:'block',marginTop:8}}>كلمة المرور
+          <input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} required style={{width:'100%'}}/>
+        </label>
+        {err && <div style={{color:'#fca5a5',fontSize:13,marginTop:8}}>{err}</div>}
+        <button disabled={loading} className="btn btn-green" style={{width:'100%',marginTop:12}}>
+          {loading ? 'جاري الدخول...' : 'دخول'}
+        </button>
+      </form>
+    </div>
+  )
+}
+
+export default function App(){
+  const [authed,setAuthed]=useState(!!localStorage.getItem('hf_token'))
+  const [tab,setTab]=useState('sales')
+  const [user,setUser]=useState(()=>{try{return JSON.parse(localStorage.getItem('hf_user')||'null')}catch{return null}})
+  const isAdmin = user?.role==='admin'
+  const [invoices,setInvoices]=useState([])
+  const [amount,setAmount]=useState('')
+
+  useEffect(()=>{
+    if(!authed) return
+    setUser(()=>{try{return JSON.parse(localStorage.getItem('hf_user')||'null')}catch{return null}})
+    apiFetch('/invoices').then(r=>r.ok?r.json():[]).then(d=>Array.isArray(d)?setInvoices(d):setInvoices([])).catch(()=>{})
+  },[authed])
+
+  function logout(){ localStorage.removeItem('hf_token'); localStorage.removeItem('hf_user'); setAuthed(false); setUser(null) }
+  async function saveInvoice(e){
+    e.preventDefault()
+    try{
+      const r=await apiFetch('/invoices',{method:'POST',body:JSON.stringify({amount:parseFloat(amount||0)})})
+      const d=await r.json().catch(()=>({}))
+      if(!r.ok) throw new Error(d.error||'فشل الحفظ')
+      setInvoices(v=>[...v,d]); setAmount('')
+    }catch(err){ alert(err.message||'فشل') }
+  }
+
+  if(!authed) return <Login onSuccess={()=>setAuthed(true)}/>
+
+  return (
+    <div className="container" style={{padding:16}}>
+      <div className="header" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+        <div className="tabs" style={{display:'flex',gap:8}}>
+          <button onClick={()=>setTab('sales')} className={'tab '+(tab==='sales'?'active':'')}>المبيعات</button>
+          <button onClick={()=>setTab('customers')} className={'tab '+(tab==='customers'?'active':'')}>العملاء</button>
+          <button onClick={()=>setTab('products')} className={'tab '+(tab==='products'?'active':'')}>المنتجات</button>
+          {isAdmin && <button onClick={()=>setTab('admin')} className={'tab '+(tab==='admin'?'active':'')}>الإدارة</button>}
+        </div>
+        <button onClick={logout} className="btn btn-red">تسجيل الخروج</button>
+      </div>
+
+      {tab==='sales' && (
+        <>
+          <div className="card" style={{marginBottom:12}}>
+            <h3 className="h2">إضافة عملية بيع (مؤقت)</h3>
+            <form onSubmit={saveInvoice} style={{display:'grid',gap:8,maxWidth:420}}>
+              <label>المبلغ<input className="input" type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} required/></label>
+              <button className="btn btn-green">حفظ</button>
+            </form>
+          </div>
+          <div className="card">
+            <h3 className="h2">آخر الفواتير</h3>
+            <table className="table"><thead><tr><th>الكود</th><th>المبلغ</th><th>التاريخ</th></tr></thead>
+              <tbody>
+                {(Array.isArray(invoices)?invoices:[]).map(inv=>(
+                  <tr key={inv.id||inv.code}><td>{inv.code||'—'}</td><td>{fmtEGP(inv.amount||0)}</td><td>{inv.createdAt?new Date(inv.createdAt).toLocaleDateString('en-CA'):'—'}</td></tr>
+                ))}
+                {(!invoices||!invoices.length)&&<tr><td colSpan={3} className="muted">لا توجد فواتير بعد</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {tab==='customers' && <div className="card"><h3 className="h2">العملاء</h3><Customers/></div>}
+      {tab==='products'  && <div className="card"><h3 className="h2">المنتجات</h3><Products/></div>}
+      {tab==='admin' && isAdmin && <Admin/>}
+    </div>
+  )
+}
