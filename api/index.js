@@ -175,6 +175,7 @@ router.get('/invoices/:id', (req,res)=>{
 })
 
 app.use('/', auth, router)
+app.use('/', auth, productsRouter)
 app.use('/', auth, customersRouter)
 
 app.listen(PORT, ()=> console.log('API running on http://localhost:'+PORT))
