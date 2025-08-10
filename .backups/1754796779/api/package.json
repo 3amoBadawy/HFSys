@@ -1,0 +1,13 @@
+{
+  "name": "hf-api",
+  "type": "module",
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "nanoid": "^5.1.5"
+  }
+}

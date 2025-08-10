@@ -1,3 +1,5 @@
+chmod +x verify_hfsys.sh
+./verify_hfsys.sh
 set -euo pipefail
 
 ROOT="$(pwd)"

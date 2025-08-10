@@ -1,0 +1,442 @@
+
+===== Basics =====
+$ echo SHELL=$SHELL
+SHELL=/bin/bash
+$ node -v || true
+v22.17.0
+$ npm -v || true
+9.8.1
+$ git --version || true
+git version 2.50.1
+$ pwd
+/workspaces/HFSys
+$ ls -la
+total 112
+drwxrwxrwx+ 10 codespace root       4096 Aug 10 03:24 .
+drwxr-xrwx+  5 codespace root       4096 Aug  9 16:45 ..
+drwxrwxrwx+  2 codespace codespace  4096 Aug 10 02:48 .backups
+drwxrwxrwx+  9 codespace root       4096 Aug 10 03:21 .git
+drwxrwxrwx+  3 codespace codespace  4096 Aug  9 19:38 .github
+-rw-rw-rw-   1 codespace codespace    26 Aug  9 17:55 .gitignore
+-rw-rw-rw-   1 codespace codespace   193 Aug 10 03:04 .hf_token
+drwxrwxrwx+  2 codespace codespace  4096 Aug 10 03:12 .vscode
+-rw-rw-rw-   1 codespace root          0 Aug 10 02:35 README.md
+drwxrwxrwx+  3 codespace codespace  4096 Aug 10 03:21 api
+-rwxrwxrwx   1 codespace codespace  1054 Aug 10 03:06 deploy_pages_with_cachebust.sh
+-rw-rw-rw-   1 codespace codespace   182 Aug 10 03:24 diagnose_20250810_032416.log
+-rwxrwxrwx   1 codespace codespace  2921 Aug 10 03:24 diagnose_hfsys.sh
+-rwxrwxrwx   1 codespace codespace  4480 Aug 10 03:10 fix.sh
+-rwxrwxrwx   1 codespace codespace  3371 Aug 10 03:19 fix_products_and_deploy.sh
+-rwxrwxrwx   1 codespace codespace  2436 Aug 10 03:14 fix_terminal.sh
+-rw-rw-rw-   1 codespace codespace    25 Aug  9 22:04 index.js
+drwxrwxrwx+ 31 codespace codespace  4096 Aug  9 16:49 node_modules
+-rw-rw-rw-   1 codespace codespace 12000 Aug  9 16:49 package-lock.json
+-rw-rw-rw-   1 codespace codespace   286 Aug  9 22:04 package.json
+-rw-rw-rw-   1 codespace codespace   682 Aug  9 19:58 scripts_add_root_route.sh
+-rwxrwxrwx   1 codespace codespace  1449 Aug 10 03:01 setup_cache_bust.sh
+drwxrwxrwx+  2 codespace codespace  4096 Aug  9 19:38 updates
+-rwxrwxrwx   1 codespace codespace  4251 Aug 10 03:06 verify_hfsys.sh
+drwxrwxrwx+  6 codespace codespace  4096 Aug 10 03:19 web
+
+===== Git status / branches / worktrees =====
+$ git status
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	deleted:    .gh-pages/404.html
+	deleted:    .gh-pages/assets/index-DSGoqGDI.css
+	deleted:    .gh-pages/assets/index-hbw2b8eb.js
+	deleted:    .gh-pages/index.html
+	deleted:    .gh-pages/version.json
+	modified:   deploy_pages_with_cachebust.sh
+	modified:   fix.sh
+	modified:   web/dist/404.html
+	deleted:    web/dist/assets/index-hbw2b8eb.js
+	modified:   web/dist/index.html
+	modified:   web/dist/version.json
+	modified:   web/public/version.json
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.hf_token
+	.vscode/
+	diagnose_20250810_032416.log
+	diagnose_hfsys.sh
+	fix_products_and_deploy.sh
+	fix_terminal.sh
+	verify_hfsys.sh
+	web/dist/assets/index-pibgOfeU.js
+
+no changes added to commit (use "git add" and/or "git commit -a")
+$ git branch -vv
++ gh-pages a771359 (/workspaces/HFSys/.gh-pages) [origin/gh-pages] chore(web): set Vite base to /HFSys/
+* main     3983cd1 [origin/main] fix(api): wire clean products router + add version.json
+$ git worktree list || true
+/workspaces/HFSys            3983cd1 [main]
+/workspaces/HFSys/.gh-pages  a771359 [gh-pages] prunable
+$ ls -la .gh-pages || true
+ls: cannot access '.gh-pages': No such file or directory
+$ test -d .gh-pages/.git && echo ".gh-pages has .git ✅" || echo ".gh-pages/.git MISSING ❌"
+.gh-pages/.git MISSING ❌
+
+===== Last commits =====
+$ git log -3 --oneline --graph --decorate
+* 3983cd1 (HEAD -> main, origin/main, origin/HEAD) fix(api): wire clean products router + add version.json
+* 4b836de fix(api): ensure products router and wiring
+* 39f9efe deploy: 2025-08-10T03:01:38+00:00
+
+===== Vite config (base, server, proxy) =====
+$ sed -n '1,200p' web/vite.config.js || true
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  base: "/HFSys/",
+  define: { 'import.meta.env.BUILD_ID': JSON.stringify(Date.now()) },
+})
+
+===== Web presence (version.json existence) =====
+$ ls -la web/public || true
+total 12
+drwxrwxrwx+ 2 codespace codespace 4096 Aug 10 03:19 .
+drwxrwxrwx+ 6 codespace codespace 4096 Aug 10 03:19 ..
+-rw-rw-rw-  1 codespace codespace   55 Aug 10 03:21 version.json
+$ test -f web/public/version.json && echo "web/public/version.json ✅" || echo "web/public/version.json ❌"
+web/public/version.json ✅
+$ ls -la web/dist || true
+total 24
+drwxrwxrwx+ 3 codespace codespace 4096 Aug 10 03:21 .
+drwxrwxrwx+ 6 codespace codespace 4096 Aug 10 03:19 ..
+-rw-rw-rw-  1 codespace codespace  433 Aug 10 03:21 404.html
+drwxrwxrwx+ 2 codespace codespace 4096 Aug 10 03:21 assets
+-rw-rw-rw-  1 codespace codespace  433 Aug 10 03:21 index.html
+-rw-rw-rw-  1 codespace codespace   55 Aug 10 03:21 version.json
+$ test -f web/dist/version.json && echo "web/dist/version.json ✅" || echo "web/dist/version.json ❌"
+web/dist/version.json ✅
+
+===== API index wiring (imports + app.use) =====
+$ nl -ba api/index.js | sed -n '1,140p' || true
+     1	import express from 'express'
+     2	import metaRouter from './meta.js'
+     3	import productsRouter from './products.js'
+     4	import cors from 'cors'
+     5	import fs from 'fs'
+     6	import { nanoid } from 'nanoid'
+     7	import jwt from 'jsonwebtoken'
+     8	import customersRouter from './customers.js'
+     9	
+    10	const PORT = process.env.PORT || 10000
+    11	const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me'
+    12	const DB_PATH = './db.json'
+    13	
+    14	function loadDB(){
+    15	  if(!fs.existsSync(DB_PATH)){
+    16	    fs.writeFileSync(DB_PATH, JSON.stringify({
+    17	      invoices: [],
+    18	      products: [],
+    19	      customers: [],
+    20	      roles: [
+    21	        { name:'admin', permissions:[
+    22	          'manage_users','view_users',
+    23	          'manage_invoices','add_invoice','view_reports',
+    24	          'settings_access','view_products','manage_products',
+    25	          'view_customers','manage_customers'
+    26	        ]},
+    27	        { name:'manager', permissions:[
+    28	          'view_users','manage_invoices','view_reports',
+    29	          'view_products','manage_products','view_customers','manage_customers'
+    30	        ]},
+    31	        { name:'staff', permissions:['add_invoice','view_users','view_customers'] }
+    32	      ],
+    33	      users: [
+    34	        { id:'seed-admin', name:'Admin', email:'admin@highfurniture.com', role:'admin', active:true }
+    35	      ],
+    36	      lastSeq: 0
+    37	    }, null, 2))
+    38	  }
+    39	  return JSON.parse(fs.readFileSync(DB_PATH,'utf-8'))
+    40	}
+    41	function saveDB(db){ fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)) }
+    42	
+    43	const app = express()
+    44	app.use(cors())
+    45	app.use(express.json({ limit:'5mb' }))
+    46	
+    47	// Root + health
+    48	app.get('/', (_req,res)=> res.type('text').send('HF API is live ✅'))
+    49	app.get('/health', (_req,res)=> res.json({ ok: true }))
+    50	
+    51	// Demo login (email+password ثابتين)
+    52	const DEMO_USER = { role: 'admin',  email:'admin@highfurniture.com', password:'Admin@123', name:'Admin' }
+    53	app.post('/login', (req,res)=>{
+    54	  const { email, password } = req.body || {}
+    55	  if(email === DEMO_USER.email && password === DEMO_USER.password){
+    56	    const token = jwt.sign({ uid:'seed-admin', name: DEMO_USER.name, role:'admin' }, JWT_SECRET, { expiresIn:'7d' })
+    57	    return res.json({ token, user: { id:'seed-admin', name: DEMO_USER.name, email, role:'admin' } })
+    58	  }
+    59	  return res.status(401).json({ error:'Invalid credentials' })
+    60	})
+    61	
+    62	// Auth middleware
+    63	function auth(req,res,next){
+    64	  const h = req.headers.authorization || ''
+    65	  const m = h.match(/^Bearer (.+)$/)
+    66	  if(!m) return res.status(401).json({ error:'Missing token' })
+    67	  try{ req.user = jwt.verify(m[1], JWT_SECRET); next() }
+    68	  catch{ return res.status(401).json({ error:'Invalid token' }) }
+    69	}
+    70	
+    71	// Helper: check permission
+    72	function hasPerm(db, role, perm){
+    73	  if(role === 'admin') return true
+    74	  const r = (db.roles||[]).find(x=>x.name===role)
+    75	  return !!(r && (r.permissions||[]).includes(perm))
+    76	}
+    77	
+    78	// Protected router
+    79	const router = express.Router()
+    80	
+    81	// ROLES
+    82	router.get('/roles', (req,res)=>{
+    83	  const db = loadDB()
+    84	  res.json(db.roles || [])
+    85	})
+    86	router.post('/roles', (req,res)=>{
+    87	  const db = loadDB()
+    88	  const role = req.user?.role || 'staff'
+    89	  if(!hasPerm(db, role, 'manage_users')) return res.status(403).json({ error:'Forbidden' })
+    90	  const { name, permissions=[] } = req.body || {}
+    91	  if(!name) return res.status(400).json({ error:'name required' })
+    92	  if(name==='admin') return res.status(400).json({ error:'cannot modify admin role' })
+    93	  if((db.roles||[]).some(r=>r.name===name)) return res.status(400).json({ error:'role exists' })
+    94	  db.roles = db.roles || []; db.roles.push({ name, permissions })
+    95	  saveDB(db); res.status(201).json({ ok:true })
+    96	})
+    97	router.put('/roles/:name', (req,res)=>{
+    98	  const db = loadDB()
+    99	  const role = req.user?.role || 'staff'
+   100	  if(!hasPerm(db, role, 'manage_users')) return res.status(403).json({ error:'Forbidden' })
+   101	  const name = req.params.name
+   102	  if(name==='admin') return res.status(400).json({ error:'cannot modify admin role' })
+   103	  const r = (db.roles||[]).find(x=>x.name===name)
+   104	  if(!r) return res.status(404).json({ error:'Not found' })
+   105	  const { permissions } = req.body || {}
+   106	  if(Array.isArray(permissions)) r.permissions = permissions
+   107	  saveDB(db); res.json({ ok:true })
+   108	})
+   109	router.delete('/roles/:name', (req,res)=>{
+   110	  const db = loadDB()
+   111	  const role = req.user?.role || 'staff'
+   112	  if(!hasPerm(db, role, 'manage_users')) return res.status(403).json({ error:'Forbidden' })
+   113	  const name = req.params.name
+   114	  if(name==='admin') return res.status(400).json({ error:'cannot delete admin role' })
+   115	  // امنع حذف دور مستخدم عليه موظفين
+   116	  if((db.users||[]).some(u=>u.role===name)) return res.status(400).json({ error:'role in use' })
+   117	  db.roles = (db.roles||[]).filter(x=>x.name!==name)
+   118	  saveDB(db); res.json({ ok:true })
+   119	})
+   120	
+   121	// USERS
+   122	router.get('/users', (req,res)=>{
+   123	  const db = loadDB()
+   124	  const role = req.user?.role || 'staff'
+   125	  if(!hasPerm(db, role, 'manage_users') && !hasPerm(db, role, 'view_users')) return res.status(403).json({ error:'Forbidden' })
+   126	  res.json(db.users || [])
+   127	})
+   128	router.post('/users', (req,res)=>{
+   129	  const db = loadDB()
+   130	  const role = req.user?.role || 'staff'
+   131	  if(!hasPerm(db, role, 'manage_users')) return res.status(403).json({ error:'Forbidden' })
+   132	  const { name, email, role: userRole='staff', active=true } = req.body || {}
+   133	  if(!name || !email) return res.status(400).json({ error:'name/email required' })
+   134	  const u = { id:nanoid(), name, email, role:userRole, active:!!active }
+   135	  db.users = db.users || []; db.users.push(u); saveDB(db)
+   136	  res.status(201).json(u)
+   137	})
+   138	router.put('/users/:id', (req,res)=>{
+   139	  const db = loadDB()
+   140	  const role = req.user?.role || 'staff'
+$ grep -n "import .* from './products.js'" api/index.js || true
+3:import productsRouter from './products.js'
+$ grep -n "app.use('/', auth, productsRouter)" api/index.js || true
+$ grep -n "app.use('/', auth, customersRouter)" api/index.js || true
+178:app.use('/', auth, customersRouter)
+$ grep -n "app.use('/', auth, router)" api/index.js || true
+177:app.use('/', auth, router)
+
+===== Products router file exists + key routes =====
+$ ls -la api/products.js || true
+-rw-rw-rw- 1 codespace codespace 1751 Aug 10 03:19 api/products.js
+$ grep -n "router.get('/products'" api/products.js || true
+21:router.get('/products', (req,res)=>{
+$ grep -n "export default router" api/products.js || true
+59:export default router;
+$ sed -n '1,160p' api/products.js || true
+import express from 'express';
+import fs from 'fs';
+import { nanoid } from 'nanoid';
+
+const DB_PATH = './db.json';
+
+function loadDB() {
+  if (!fs.existsSync(DB_PATH)) {
+    fs.writeFileSync(DB_PATH, JSON.stringify({ invoices:[], products:[], customers:[], roles:[] }, null, 2));
+  }
+  const raw = fs.readFileSync(DB_PATH, 'utf8');
+  const db = JSON.parse(raw || '{}');
+  if (!Array.isArray(db.products)) db.products = [];
+  return db;
+}
+function saveDB(db){ fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); }
+
+const router = express.Router();
+
+// GET /products
+router.get('/products', (req,res)=>{
+  const db = loadDB();
+  res.json(db.products);
+});
+
+// POST /products
+router.post('/products', express.json(), (req,res)=>{
+  const { name, sku, price } = req.body || {};
+  if (!name) return res.status(400).json({error:'name required'});
+  const db = loadDB();
+  const prod = { id: nanoid(8), name, sku: sku || '', price: Number(price)||0, createdAt: Date.now() };
+  db.products.push(prod);
+  saveDB(db);
+  res.status(201).json(prod);
+});
+
+// PUT /products/:id
+router.put('/products/:id', express.json(), (req,res)=>{
+  const { id } = req.params;
+  const db = loadDB();
+  const i = db.products.findIndex(p=>p.id===id);
+  if (i<0) return res.status(404).json({error:'not found'});
+  db.products[i] = { ...db.products[i], ...req.body, id };
+  saveDB(db);
+  res.json(db.products[i]);
+});
+
+// DELETE /products/:id
+router.delete('/products/:id', (req,res)=>{
+  const { id } = req.params;
+  const db = loadDB();
+  const before = db.products.length;
+  db.products = db.products.filter(p=>p.id!==id);
+  if (db.products.length === before) return res.status(404).json({error:'not found'});
+  saveDB(db);
+  res.json({ok:true});
+});
+
+export default router;
+
+===== Customers router quick check =====
+$ ls -la api/customers.js || true
+-rw-rw-rw- 1 codespace codespace 4288 Aug  9 21:59 api/customers.js
+$ grep -n "router.get('/customers'" api/customers.js || true
+
+===== API live checks (no token + token) =====
+$ curl -sSI https://hfsys.onrender.com/ | head -n 8 || true
+HTTP/2 200 
+date: Sun, 10 Aug 2025 03:24:17 GMT
+content-type: text/plain; charset=utf-8
+access-control-allow-origin: *
+etag: W/"12-JDkEu1t8yfHdI/phaQ0wSA2RLFo"
+rndr-id: 6cf3a1be-12c6-4fd9
+vary: Accept-Encoding
+x-powered-by: Express
+$ curl -sS https://hfsys.onrender.com/health || true
+{"ok":true}
+===== With token from .hf_token =====
+$ curl -si -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJzZWVkLWFkbWluIiwibmFtZSI6IkFkbWluIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU0Nzk1MDQ4LCJleHAiOjE3NTUzOTk4NDh9.o4B334u9WENNwrhMusBP3h6O4sHM6ol9jzP6R1G5I5k' https://hfsys.onrender.com/customers | head -n 20 || true
+HTTP/2 200 
+date: Sun, 10 Aug 2025 03:24:17 GMT
+content-type: application/json; charset=utf-8
+access-control-allow-origin: *
+etag: W/"2-l9Fw4VUO7kr8CvBlt4zaMCqXZ0w"
+rndr-id: 0cfdba37-57c6-4080
+vary: Accept-Encoding
+x-powered-by: Express
+x-render-origin-server: Render
+cf-cache-status: DYNAMIC
+server: cloudflare
+cf-ray: 96cc6120eb3b16bf-AMS
+alt-svc: h3=":443"; ma=86400
+
+[]$ curl -si -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJzZWVkLWFkbWluIiwibmFtZSI6IkFkbWluIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU0Nzk1MDQ4LCJleHAiOjE3NTUzOTk4NDh9.o4B334u9WENNwrhMusBP3h6O4sHM6ol9jzP6R1G5I5k' https://hfsys.onrender.com/products  | head -n 20 || true
+HTTP/2 404 
+date: Sun, 10 Aug 2025 03:24:17 GMT
+content-type: text/html; charset=utf-8
+access-control-allow-origin: *
+content-security-policy: default-src 'none'
+rndr-id: be984f2b-dd51-489b
+vary: Accept-Encoding
+x-content-type-options: nosniff
+x-powered-by: Express
+x-render-origin-server: Render
+cf-cache-status: DYNAMIC
+server: cloudflare
+cf-ray: 96cc61218a09c200-AMS
+alt-svc: h3=":443"; ma=86400
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+
+===== GitHub Pages checks =====
+$ curl -sSI https://3amobadawy.github.io/HFSys/ | head -n 8 || true
+HTTP/2 200 
+server: GitHub.com
+content-type: text/html; charset=utf-8
+last-modified: Sun, 10 Aug 2025 03:19:30 GMT
+access-control-allow-origin: *
+strict-transport-security: max-age=31556952
+etag: "68980fc2-1b1"
+expires: Sun, 10 Aug 2025 03:34:17 GMT
+$ curl -sS https://3amobadawy.github.io/HFSys/version.json || echo 'version.json missing'
+{ "build": "4b836de", "time": "2025-08-10T03:19:01+00:00" }
+
+===== Package.json (root + web) =====
+$ sed -n '1,160p' package.json || true
+{
+  "name": "hf-starter",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm:dev-api\" \"npm:dev-web\"",
+    "dev-api": "npm --prefix api run dev",
+    "dev-web": "npm --prefix web run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "type": "module"
+}$ sed -n '1,200p' web/package.json || true
+{
+  "name": "hf-web",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.2"
+  }
+}
+
+===== Done. Log file written =====
+Log path: diagnose_20250810_032416.log

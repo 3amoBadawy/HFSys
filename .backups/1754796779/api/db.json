@@ -1,0 +1,53 @@
+{
+  "invoices": [],
+  "lastSeq": 0,
+  "customers": [],
+  "users": [
+    {
+      "id": "seed-admin",
+      "name": "Admin",
+      "email": "admin@highfurniture.com",
+      "password": "Admin@123",
+      "role": "admin",
+      "active": true,
+      "createdAt": "2025-08-09T00:00:00Z"
+    }
+  ],
+  "roles": [
+    {
+      "name": "admin",
+      "permissions": [
+        "manage_invoices",
+        "manage_products",
+        "manage_users",
+        "settings_access",
+        "view_products",
+        "view_reports",
+        "view_users",
+        "add_invoice",
+        "add_product",
+        "edit_product",
+        "delete_product"
+      ]
+    },
+    {
+      "name": "manager",
+      "permissions": [
+        "manage_products",
+        "view_products",
+        "view_users",
+        "manage_invoices",
+        "view_reports",
+        "add_product",
+        "edit_product"
+      ]
+    },
+    {
+      "name": "staff",
+      "permissions": [
+        "view_products"
+      ]
+    }
+  ],
+  "products": []
+}
