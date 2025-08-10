@@ -2,78 +2,59 @@ import express from 'express';
 import fs from 'fs';
 import { nanoid } from 'nanoid';
 
-const DB_PATH = './db.json';
+const DB_PATH = './api/db.json';
 
-function loadDB() {
-  if (!fs.existsSync(DB_PATH)) {
-    fs.writeFileSync(DB_PATH, JSON.stringify({
-      invoices: [], products: [], customers: [],
-      roles: [
-        { name: 'admin', permissions: ['manage_users','view_users','manage_invoices','add_invoice','view_reports','settings_access'] },
-        { name: 'manager', permissions: ['manage_invoices','view_reports','view_users'] },
-        { name: 'staff', permissions: ['add_invoice'] }
-      ],
-      users: [
-        { id: 'seed-admin', name: 'Admin', email: 'admin@highfurniture.com', role: 'admin', active: true }
-      ],
-      lastSeq: 0
-    }, null, 2));
-  }
-  return JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
+function loadDB(){
+  if(!fs.existsSync(DB_PATH)) fs.writeFileSync(DB_PATH, JSON.stringify({ invoices:[], products:[], customers:[], users:[], roles:[] },null,2));
+  return JSON.parse(fs.readFileSync(DB_PATH,'utf8')||'{}');
 }
-function saveDB(db){ fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); }
+function saveDB(db){ fs.writeFileSync(DB_PATH, JSON.stringify(db,null,2)); }
 
 const router = express.Router();
 
-router.get('/products', (req, res) => {
-  const db = loadDB();
-  res.json(db.products || []);
+// list
+router.get('/products', (req,res)=>{
+  try{
+    const db = loadDB();
+    res.json(db.products||[]);
+  }catch(e){ res.status(500).json({error:'Server error'}); }
 });
 
-router.post('/products', (req, res) => {
-  const db = loadDB();
-  const body = req.body || {};
-  if (!body.name) return res.status(400).json({ error: 'name required' });
-  const product = {
-    id: nanoid(),
-    name: String(body.name).trim(),
-    sku: (body.sku ?? '').toString().trim(),
-    price: Number(body.price || 0),
-    stock: Number(body.stock || 0),
-    notes: (body.notes ?? '').toString(),
-    imageData: body.imageData || '',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-  db.products = db.products || [];
-  db.products.push(product);
-  saveDB(db);
-  res.status(201).json(product);
+// create
+router.post('/products', express.json(), (req,res)=>{
+  try{
+    const { name, sku, price, stock } = req.body||{};
+    if(!name) return res.status(400).json({error:'name required'});
+    const db = loadDB();
+    const item = { id: nanoid(8), name, sku: sku||'', price: Number(price||0), stock: Number(stock||0), createdAt: new Date().toISOString() };
+    db.products = db.products||[];
+    db.products.push(item);
+    saveDB(db);
+    res.json(item);
+  }catch(e){ res.status(500).json({error:'Server error'}); }
 });
 
-router.patch('/products/:id', (req, res) => {
-  const db = loadDB();
-  const idx = (db.products || []).findIndex(p => p.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
-  const update = req.body || {};
-  db.products[idx] = {
-    ...db.products[idx],
-    ...update,
-    price: update.price !== undefined ? Number(update.price) : db.products[idx].price,
-    stock: update.stock !== undefined ? Number(update.stock) : db.products[idx].stock,
-    updatedAt: new Date().toISOString()
-  };
-  saveDB(db);
-  res.json(db.products[idx]);
+// update
+router.put('/products/:id', express.json(), (req,res)=>{
+  try{
+    const db = loadDB();
+    const i = (db.products||[]).findIndex(p=>p.id===req.params.id);
+    if(i===-1) return res.status(404).json({error:'not found'});
+    db.products[i] = { ...db.products[i], ...req.body };
+    saveDB(db);
+    res.json(db.products[i]);
+  }catch(e){ res.status(500).json({error:'Server error'}); }
 });
 
-router.delete('/products/:id', (req, res) => {
-  const db = loadDB();
-  const before = (db.products || []).length;
-  db.products = (db.products || []).filter(p => p.id !== req.params.id);
-  if (db.products.length === before) return res.status(404).json({ error: 'Not found' });
-  saveDB(db);
-  res.json({ ok: true });
+// delete
+router.delete('/products/:id', (req,res)=>{
+  try{
+    const db = loadDB();
+    const before = (db.products||[]).length;
+    db.products = (db.products||[]).filter(p=>p.id!==req.params.id);
+    saveDB(db);
+    res.json({ok:true, removed: before - db.products.length});
+  }catch(e){ res.status(500).json({error:'Server error'}); }
 });
 
 export default router;

@@ -23,14 +23,23 @@
         "settings_access",
         "view_products",
         "view_reports",
-        "view_users"
+        "view_users",
+        "add_invoice",
+        "add_product",
+        "edit_product",
+        "delete_product"
       ]
     },
     {
       "name": "manager",
       "permissions": [
         "manage_products",
-        "view_products"
+        "view_products",
+        "view_users",
+        "manage_invoices",
+        "view_reports",
+        "add_product",
+        "edit_product"
       ]
     },
     {
@@ -39,5 +48,6 @@
         "view_products"
       ]
     }
-  ]
+  ],
+  "products": []
 }
