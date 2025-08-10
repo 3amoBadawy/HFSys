@@ -1,24 +1,35 @@
-export const API_BASE = import.meta.env.VITE_API_URL || '';
-export function apiFetch(path, opts = {}) {
-  const token = localStorage.getItem('hf_token') || '';
-  return fetch(API_BASE + path, {
-    ...opts,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(opts.headers || {}),
-      ...(token ? { Authorization: 'Bearer ' + token } : {})
-    }
-  });
-}
-export const fmtEGP = (n)=> new Intl.NumberFormat('ar-EG',{style:'currency',currency:'EGP',maximumFractionDigits:2}).format(+n||0)
+const BASE_URL =
+  (typeof window !== 'undefined' && window.__HF_API__) ||
+  import.meta.env?.VITE_API_BASE ||
+  'https://hfsys.onrender.com';
 
-export async function hasPermission(perm){
-  try{
-    const res = await apiFetch('/roles')
-    if(!res.ok) return false
-    const roles = await res.json()
-    const me = JSON.parse(localStorage.getItem('hf_user')||'{}')
-    const r = roles.find(x=>x.name===me?.role)
-    return !!(r && r.permissions && r.permissions.includes(perm))
-  }catch{ return false }
+export function fmtEGP(n){ try{ return new Intl.NumberFormat('ar-EG',{style:'currency',currency:'EGP'}).format(+n||0) }catch{ return `${+n||0} ج.م` } }
+
+/** fetch مع توكن + JSON + معالجة 401 */
+export async function apiFetch(path, opts = {}) {
+  const token = (typeof localStorage !== 'undefined') ? localStorage.getItem('hf_token') : null;
+  const headers = new Headers(opts.headers || {});
+  if (!headers.has('Content-Type') && !(opts.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  const res = await fetch(`${BASE_URL}${path}`, { ...opts, headers });
+
+  // لو التوكن بايظ/منتهي
+  if (res.status === 401) {
+    try { localStorage.removeItem('hf_token'); localStorage.removeItem('hf_user'); } catch {}
+    // رجّع Promise فيها التفاصيل بدل ما نكسر الواجهة
+    const msg = await res.text().catch(()=> '');
+    throw new Error(msg || 'Unauthorized (401)');
+  }
+  return res;
 }
+
+/** helpers جاهزة لو حبيت */
+export const api = {
+  get:  (p) => apiFetch(p),
+  post: (p, data) => apiFetch(p, { method:'POST', body: JSON.stringify(data) }),
+  put:  (p, data) => apiFetch(p, { method:'PUT',  body: JSON.stringify(data) }),
+  del:  (p) => apiFetch(p, { method:'DELETE' }),
+};
