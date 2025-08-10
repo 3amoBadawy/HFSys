@@ -1,50 +1,59 @@
-import express from 'express'
-import fs from 'fs'
-import { nanoid } from 'nanoid'
+import express from 'express';
+import fs from 'fs';
+import { nanoid } from 'nanoid';
 
-const DB_PATH = './db.json'
+const DB_PATH = './db.json';
 
-function loadDB(){
-  if(!fs.existsSync(DB_PATH)){
-    fs.writeFileSync(DB_PATH, JSON.stringify({
-      invoices:[], products:[], customers:[], roles:[{name:'admin',permissions:['manage_users','view_users']}]
-    }, null, 2))
+function loadDB() {
+  if (!fs.existsSync(DB_PATH)) {
+    fs.writeFileSync(DB_PATH, JSON.stringify({ invoices:[], products:[], customers:[], roles:[] }, null, 2));
   }
-  return JSON.parse(fs.readFileSync(DB_PATH,'utf-8'))
+  const raw = fs.readFileSync(DB_PATH, 'utf8');
+  const db = JSON.parse(raw || '{}');
+  if (!Array.isArray(db.products)) db.products = [];
+  return db;
 }
-function saveDB(db){ fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)) }
+function saveDB(db){ fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); }
 
-const router = express.Router()
+const router = express.Router();
 
+// GET /products
 router.get('/products', (req,res)=>{
-  const db = loadDB()
-  res.json(db.products || [])
-})
+  const db = loadDB();
+  res.json(db.products);
+});
 
-router.post('/products', (req,res)=>{
-  const db = loadDB()
-  const body = req.body || {}
-  const product = {
-    id: nanoid(),
-    name: String(body.name||'').trim(),
-    sku: String(body.sku||'').trim(),
-    price: Number(body.price||0),
-    createdAt: new Date().toISOString()
-  }
-  if(!product.name){ return res.status(400).json({error:'الاسم مطلوب'}) }
-  db.products = db.products || []
-  db.products.push(product)
-  saveDB(db)
-  res.status(201).json(product)
-})
+// POST /products
+router.post('/products', express.json(), (req,res)=>{
+  const { name, sku, price } = req.body || {};
+  if (!name) return res.status(400).json({error:'name required'});
+  const db = loadDB();
+  const prod = { id: nanoid(8), name, sku: sku || '', price: Number(price)||0, createdAt: Date.now() };
+  db.products.push(prod);
+  saveDB(db);
+  res.status(201).json(prod);
+});
 
+// PUT /products/:id
+router.put('/products/:id', express.json(), (req,res)=>{
+  const { id } = req.params;
+  const db = loadDB();
+  const i = db.products.findIndex(p=>p.id===id);
+  if (i<0) return res.status(404).json({error:'not found'});
+  db.products[i] = { ...db.products[i], ...req.body, id };
+  saveDB(db);
+  res.json(db.products[i]);
+});
+
+// DELETE /products/:id
 router.delete('/products/:id', (req,res)=>{
-  const db = loadDB()
-  const before = (db.products||[]).length
-  db.products = (db.products||[]).filter(p=>p.id!==req.params.id)
-  const after = db.products.length
-  saveDB(db)
-  res.json({ ok: true, removed: before-after })
-})
+  const { id } = req.params;
+  const db = loadDB();
+  const before = db.products.length;
+  db.products = db.products.filter(p=>p.id!==id);
+  if (db.products.length === before) return res.status(404).json({error:'not found'});
+  saveDB(db);
+  res.json({ok:true});
+});
 
-export default router
+export default router;
