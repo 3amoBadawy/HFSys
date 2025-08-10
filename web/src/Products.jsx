@@ -1,98 +1,133 @@
-import { safeArray, logIfNotArray } from './util'
-import React, { useEffect, useState } from 'react'
-import { apiFetch, fmtEGP } from './apiBase'
-import { hasPermission } from './apiBase'
-logIfNotArray("items", items);
-logIfNotArray("users", users);
-logIfNotArray("roles", roles);
-logIfNotArray("invoices", invoices);
-logIfNotArray("customers", customers);
-logIfNotArray("products", products);
+import React, { useEffect, useMemo, useState } from 'react'
+import { apiFetch } from './apiBase'
+import { safeArray } from './util'
 
 export default function Products(){
-  const [items,setItems]=useState([])
-  const [q,setQ]=useState('')
-  const [form,setForm]=useState({name:'',sku:'',price:'',stock:'',notes:''})
-  const [canManage,setCanManage]=useState(false)
-  const [loading,setLoading]=useState(true)
-  const [err,setErr]=useState('')
+  const [rows, setRows] = useState([])
+  const [q, setQ] = useState('')
+  const [msg, setMsg] = useState('')
+  const [err, setErr] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  useEffect(()=>{
-    (async()=>{
-      setCanManage(await hasPermission('manage_products'))
-      await refresh()
-    })()
-  },[])
+  const [form, setForm] = useState({ name:'', sku:'', price:'', imageData:'' })
+  const [editId, setEditId] = useState(null) // لو بنعدل
 
-  async function refresh(){
+  async function load(){
     setLoading(true); setErr('')
     try{
-      const r=await apiFetch('/products'); 
-      if(!r.ok) throw new Error('فشل تحميل المنتجات')
-      setItems(await r.json())
-    }catch(e){ setErr(e.message||'خطأ') } finally{ setLoading(false) }
+      const r = await apiFetch('/products')
+      if(!r.ok){ const t = await r.json().catch(()=>({})); throw new Error(t.error||('HTTP '+r.status)) }
+      const data = await r.json().catch(()=>[])
+      setRows(safeArray(data))
+    }catch(e){ setErr('فشل تحميل المنتجات'); console.warn('[Products] load', e) }
+    finally{ setLoading(false) }
   }
 
-  async function add(e){
-    e.preventDefault()
-    if(!canManage) return
-    const body={...form, price:parseFloat(form.price||0), stock:parseInt(form.stock||0)}
-    const r = await apiFetch('/products',{method:'POST', body:JSON.stringify(body)})
-    if(!r.ok){ const t=await r.json().catch(()=>({})); alert(t.error||'فشل الإضافة'); return }
-    setForm({name:'',sku:'',price:'',stock:'',notes:''}); refresh()
+  useEffect(()=>{ load() }, [])
+
+  async function save(e){
+    e.preventDefault(); setMsg(''); setErr('')
+    try{
+      const payload = { 
+        name: form.name?.trim(), 
+        sku: form.sku?.trim(), 
+        price: parseFloat(form.price||0), 
+        imageData: form.imageData||'' 
+      }
+      if(!payload.name || !payload.sku){ setErr('الاسم و SKU مطلوبان'); return }
+      const r = await apiFetch(editId? `/products/${editId}`:'/products', {
+        method: editId? 'PUT':'POST',
+        body: JSON.stringify(payload)
+      })
+      const t = await r.json().catch(()=>({}))
+      if(!r.ok) throw new Error(t.error||('HTTP '+r.status))
+      setMsg(editId? 'تم التحديث':'تمت الإضافة')
+      setForm({ name:'', sku:'', price:'', imageData:'' })
+      setEditId(null)
+      load()
+    }catch(e){ setErr(e.message||'فشل الحفظ') }
   }
 
-  async function del(id){
-    if(!canManage) return
+  async function remove(id){
     if(!confirm('حذف المنتج؟')) return
-    const r = await apiFetch('/products/'+id,{method:'DELETE'})
-    if(!r.ok){ const t=await r.json().catch(()=>({})); alert(t.error||'فشل الحذف'); return }
-    setItems(v=>v.filter(x=>x.id!==id))
+    try{
+      const r = await apiFetch(`/products/${id}`, { method:'DELETE' })
+      if(!r.ok){ const t=await r.json().catch(()=>({})); throw new Error(t.error||('HTTP '+r.status)) }
+      setRows(v=>v.filter(x=>x.id!==id))
+    }catch(e){ alert(e.message||'فشل الحذف') }
   }
 
-  const filtered = items.filter(x=>{
-    const s=(q||'').toLowerCase()
-    return !s || [x.name,x.sku,String(x.price),String(x.stock)].join(' ').toLowerCase().includes(s)
-  })
+  function onPickImage(e){
+    const f = e.target.files?.[0]
+    if(!f) return setForm(s=>({...s, imageData:''}))
+    const reader = new FileReader()
+    reader.onload = ev => setForm(s=>({...s, imageData: ev.target.result }))
+    reader.readAsDataURL(f)
+  }
+
+  function startEdit(p){
+    setEditId(p.id)
+    setForm({ name:p.name||'', sku:p.sku||'', price:String(p.price??''), imageData:p.imageData||'' })
+    window.scrollTo({ top:0, behavior:'smooth' })
+  }
+
+  const filtered = useMemo(()=>{
+    const k = q.trim().toLowerCase()
+    const base = safeArray(rows)
+    if(!k) return base
+    return base.filter(p => 
+      String(p.name||'').toLowerCase().includes(k) ||
+      String(p.sku||'').toLowerCase().includes(k)
+    )
+  }, [rows, q])
 
   return (
     <>
       <div className="card">
-        <div className="grid">
-          <input className="input" placeholder="بحث بالاسم/الكود" value={q} onChange={e=>setQ(e.target.value)} />
+        <div style={{display:'flex',alignItems:'center',gap:12,justifyContent:'space-between'}}>
+          <h3 className="h2">المنتجات</h3>
+          <input className="input" placeholder="بحث بالاسم/الـSKU" value={q} onChange={e=>setQ(e.target.value)} style={{maxWidth:280}}/>
         </div>
-        {canManage && (
-          <form onSubmit={add} className="grid" style={{marginTop:12}}>
-            <input className="input" placeholder="اسم المنتج*" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required/>
-            <div className="grid grid-3">
-              <input className="input" placeholder="SKU" value={form.sku} onChange={e=>setForm({...form,sku:e.target.value})}/>
-              <input className="input" type="number" step="0.01" placeholder="السعر" value={form.price} onChange={e=>setForm({...form,price:e.target.value})}/>
-              <input className="input" type="number" step="1" placeholder="المخزون" value={form.stock} onChange={e=>setForm({...form,stock:e.target.value})}/>
-            </div>
-            <textarea className="input" placeholder="ملاحظات" value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/>
-            <div><button className="btn btn-green">إضافة</button></div>
-          </form>
-        )}
-        {!canManage && <div className="muted" style={{marginTop:8}}>يمكنك عرض المنتجات فقط.</div>}
-        {err && <div style={{color:'#fca5a5',marginTop:8}}>{err}</div>}
+
+        <form onSubmit={save} className="grid" style={{marginTop:12}}>
+          <div className="grid grid-2">
+            <label>الاسم<input className="input" value={form.name} onChange={e=>setForm(s=>({...s, name:e.target.value}))} required/></label>
+            <label>SKU<input className="input" value={form.sku} onChange={e=>setForm(s=>({...s, sku:e.target.value}))} required/></label>
+            <label>السعر<input className="input" type="number" step="0.01" value={form.price} onChange={e=>setForm(s=>({...s, price:e.target.value}))} required/></label>
+            <label>صورة المنتج<input className="input" type="file" accept="image/*" onChange={onPickImage}/></label>
+          </div>
+          <div>
+            <button className="btn btn-green">{editId? 'تحديث':'إضافة'}</button>
+            {editId && <button type="button" className="btn" style={{marginInlineStart:8}} onClick={()=>{ setEditId(null); setForm({name:'',sku:'',price:'',imageData:''}) }}>إلغاء</button>}
+          </div>
+          {msg && <div style={{color:'#86efac'}}>{msg}</div>}
+          {err && <div style={{color:'#fca5a5'}}>{err}</div>}
+        </form>
       </div>
 
       <div className="card" style={{marginTop:12}}>
-        <h3 className="h2">قائمة المنتجات</h3>
         <table className="table">
-          <thead><tr><th>الاسم</th><th>SKU</th><th>السعر</th><th>المخزون</th><th>إجراء</th></tr></thead>
+          <thead><tr><th>الإجراء</th><th>السعر</th><th>SKU</th><th>الاسم</th></tr></thead>
           <tbody>
-            {safeArray(filtered).map(p=>(
+            {filtered.map(p=>(
               <tr key={p.id}>
-                <td>{p.name}</td><td>{p.sku||'—'}</td><td>{fmtEGP(p.price||0)}</td><td>{p.stock||0}</td>
                 <td>
-                  {canManage ? (
-                    <button className="btn btn-red" onClick={()=>del(p.id)}>حذف</button>
-                  ) : <span className="muted">—</span>}
+                  <div style={{display:'flex',gap:8}}>
+                    <button className="btn" onClick={()=>startEdit(p)}>تعديل</button>
+                    <button className="btn btn-red" onClick={()=>remove(p.id)}>حذف</button>
+                  </div>
+                </td>
+                <td>{Number(p.price||0).toLocaleString('ar-EG')}</td>
+                <td>{p.sku||'—'}</td>
+                <td style={{display:'flex',alignItems:'center',gap:8}}>
+                  {p.imageData ? <img src={p.imageData} alt="" style={{width:32,height:32,objectFit:'cover',borderRadius:6}}/> : null}
+                  <span>{p.name||'—'}</span>
                 </td>
               </tr>
             ))}
-            {!filtered.length && <tr><td colSpan={5} className="muted">لا توجد منتجات</td></tr>}
+            {!filtered.length && (
+              <tr><td colSpan={4} className="muted">{loading? 'جار التحميل…':'لا يوجد منتجات'}</td></tr>
+            )}
           </tbody>
         </table>
       </div>
