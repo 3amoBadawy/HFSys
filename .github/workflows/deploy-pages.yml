@@ -3,48 +3,54 @@ name: Deploy Web to GitHub Pages
 on:
   push:
     branches: [ main ]
+    paths:
+      - "web/**"
+      - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages-deploy
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Use Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
 
-      - name: Install web deps
-        run: npm --prefix web ci || npm --prefix web install
+      - name: Install deps (web)
+        working-directory: web
+        run: npm ci
 
-      - name: Build web (set base path for Pages)
-        env:
-          VITE_BASE: "/${{ github.event.repository.name }}/"
-        run: npm --prefix web run build
+      - name: Build
+        working-directory: web
+        run: |
+          npm run build
+          cp dist/index.html dist/404.html
+          # اضمن وجود version.json داخل dist
+          test -f public/version.json || echo '{ "build":"${{ github.sha }}", "time":"${{ github.event.head_commit.timestamp || github.run_started_at }}"}' > public/version.json
+          cp public/version.json dist/version.json
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: List dist
+        run: ls -la web/dist && test -f web/dist/index.html
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: web/dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: web/dist
+          publish_branch: gh-pages
+          keep_files: false

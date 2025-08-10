@@ -1,0 +1,80 @@
+name: Verify HFSys
+
+on:
+  workflow_run:
+    workflows: ["Deploy Web to GitHub Pages"]
+    types: [completed]
+  push:
+    branches: [ main ]
+    paths:
+      - "api/**"
+      - "web/**"
+      - "verify_hfsys.sh"
+      - ".github/workflows/verify-hfsys.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      API_BASE: https://hfsys.onrender.com
+      WEB_BASE: https://3amobadawy.github.io/HFSys
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Provide API token from secret
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "${HF_TOKEN:-}" ]; then
+            echo "::warning::HF_TOKEN secret is missing. Some API checks may fail."
+          else
+            echo "$HF_TOKEN" > .hf_token
+          fi
+
+      - name: Make verify script executable
+        run: chmod +x ./verify_hfsys.sh || true
+
+      - name: Run verify
+        id: verify
+        run: |
+          set +e
+          ./verify_hfsys.sh | tee verify_output.txt
+          # استخرج أرقام ال Pass/Fail لو موجودة
+          PASSED=$(grep -Eo 'Passed:\s*[0-9]+' verify_output.txt | awk '{print $2}' | tail -n1)
+          FAILED=$(grep -Eo 'Failed:\s*[0-9]+' verify_output.txt | awk '{print $2}' | tail -n1)
+          echo "passed=${PASSED:-0}" >> $GITHUB_OUTPUT
+          echo "failed=${FAILED:-0}" >> $GITHUB_OUTPUT
+          # لو فيه فشل نخلي الجوب فاشل علشان يبان
+          if grep -q "❌" verify_output.txt; then
+            EXIT_CODE=1
+          else
+            EXIT_CODE=0
+          fi
+          exit $EXIT_CODE
+
+      - name: Upload logs (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-hfsys-logs
+          path: |
+            verify_output.txt
+            diagnose_*.log
+          if-no-files-found: ignore
+
+      - name: Summarize
+        if: always()
+        run: |
+          echo "## HFSys Verify" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**API:** $API_BASE" >> $GITHUB_STEP_SUMMARY
+          echo "**Web:** $WEB_BASE" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Passed:** ${{ steps.verify.outputs.passed || '0' }}    **Failed:** ${{ steps.verify.outputs.failed || '0' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Logs attached as artifact." >> $GITHUB_STEP_SUMMARY
