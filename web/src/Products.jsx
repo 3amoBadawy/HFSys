@@ -1,6 +1,13 @@
+import { safeArray, logIfNotArray } from './util'
 import React, { useEffect, useState } from 'react'
 import { apiFetch, fmtEGP } from './apiBase'
 import { hasPermission } from './apiBase'
+logIfNotArray("items", items);
+logIfNotArray("users", users);
+logIfNotArray("roles", roles);
+logIfNotArray("invoices", invoices);
+logIfNotArray("customers", customers);
+logIfNotArray("products", products);
 
 export default function Products(){
   const [items,setItems]=useState([])
@@ -75,7 +82,7 @@ export default function Products(){
         <table className="table">
           <thead><tr><th>الاسم</th><th>SKU</th><th>السعر</th><th>المخزون</th><th>إجراء</th></tr></thead>
           <tbody>
-            {filtered.map(p=>(
+            {safeArray(filtered).map(p=>(
               <tr key={p.id}>
                 <td>{p.name}</td><td>{p.sku||'—'}</td><td>{fmtEGP(p.price||0)}</td><td>{p.stock||0}</td>
                 <td>

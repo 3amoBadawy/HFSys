@@ -1,5 +1,12 @@
+import { safeArray, logIfNotArray } from './util'
 import React, { useEffect, useMemo, useState } from 'react'
 import { apiFetch } from './apiBase'
+logIfNotArray("items", items);
+logIfNotArray("users", users);
+logIfNotArray("roles", roles);
+logIfNotArray("invoices", invoices);
+logIfNotArray("customers", customers);
+logIfNotArray("products", products);
 
 export default function AdminRoles(){
   const [allPerms,setAllPerms]=useState([])
@@ -58,7 +65,7 @@ export default function AdminRoles(){
       <form onSubmit={save} className="grid" style={{marginTop:10}}>
         <input className="input" placeholder="اسم الدور" value={form.name} onChange={e=>setForm({...form, name:e.target.value})}/>
         <div style={{display:'grid', gap:8, gridTemplateColumns:'repeat(2, minmax(0,1fr))'}}>
-          {allPerms.map(p=>(
+          {safeArray(allPerms).map(p=>(
             <label key={p} style={{display:'flex',alignItems:'center',gap:8}}>
               <input type="checkbox" checked={form.permissions.includes(p)} onChange={()=>togglePerm(p)} />
               <span className="badge">{p}</span>
@@ -78,7 +85,7 @@ export default function AdminRoles(){
       <table className="table" style={{marginTop:12}}>
         <thead><tr><th>الدور</th><th>الصلاحيات</th><th>إجراء</th></tr></thead>
         <tbody>
-          {filtered.length ? filtered.map(r=>(
+          {filtered.length ? safeArray(filtered).map(r=>(
             <tr key={r.name}>
               <td>{r.name}</td>
               <td>{(r.permissions||[]).length ? r.permissions.join(', ') : '—'}</td>

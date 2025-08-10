@@ -1,5 +1,12 @@
+import { safeArray, logIfNotArray } from './util'
 import React, { useEffect, useMemo, useState } from 'react'
 import { apiFetch } from './apiBase'
+logIfNotArray("items", items);
+logIfNotArray("users", users);
+logIfNotArray("roles", roles);
+logIfNotArray("invoices", invoices);
+logIfNotArray("customers", customers);
+logIfNotArray("products", products);
 
 export default function CustomerSelect({ value, onChange, placeholder="اختر عميل" }) {
   const [list,setList]=useState([])
@@ -24,7 +31,7 @@ export default function CustomerSelect({ value, onChange, placeholder="اختر 
         onFocus={()=>setOpen(true)} />
       {open && (
         <div className="ac-list" onMouseDown={e=>e.preventDefault()}>
-          {filtered.length ? filtered.map(c=>(
+          {filtered.length ? safeArray(filtered).map(c=>(
             <div key={c.id} className="ac-item" onClick={()=>choose(c)}>
               <strong>{c.name}</strong>{' '}
               {c.phone && <span className="badge">{c.phone}</span>}

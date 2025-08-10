@@ -1,5 +1,12 @@
+import { safeArray, logIfNotArray } from './util'
 import React, { useEffect, useMemo, useState } from 'react'
 import { apiFetch } from './apiBase'
+logIfNotArray("items", items);
+logIfNotArray("users", users);
+logIfNotArray("roles", roles);
+logIfNotArray("invoices", invoices);
+logIfNotArray("customers", customers);
+logIfNotArray("products", products);
 
 export default function AdminUsers(){
   const [list,setList]=useState([])
@@ -93,7 +100,7 @@ export default function AdminUsers(){
           <table className="table" style={{marginTop:12}}>
             <thead><tr><th>الاسم</th><th>الإيميل</th><th>الدور</th><th>الحالة</th><th>إجراء</th></tr></thead>
             <tbody>
-              {slice.length ? slice.map(u=>(
+              {slice.length ? safeArray(slice).map(u=>(
                 <tr key={u.id}>
                   <td>{u.name}</td>
                   <td>{u.email}</td>

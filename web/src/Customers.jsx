@@ -1,5 +1,12 @@
+import { safeArray, logIfNotArray } from './util'
 import React, { useEffect, useMemo, useState } from 'react'
 import { apiFetch } from './apiBase'
+logIfNotArray("items", items);
+logIfNotArray("users", users);
+logIfNotArray("roles", roles);
+logIfNotArray("invoices", invoices);
+logIfNotArray("customers", customers);
+logIfNotArray("products", products);
 
 export default function Customers(){
   const [list,setList]=useState([])
@@ -67,7 +74,7 @@ export default function Customers(){
         <table className="table" style={{marginTop:12}}>
           <thead><tr><th>الاسم</th><th>الهاتف</th><th>العنوان</th><th>إجراء</th></tr></thead>
           <tbody>
-            {filtered.length ? filtered.map(c=>(
+            {filtered.length ? safeArray(filtered).map(c=>(
               <tr key={c.id}>
                 <td>{c.name}</td><td>{c.phone||'—'}</td><td>{c.address||'—'}</td>
                 <td>

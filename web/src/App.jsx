@@ -1,3 +1,4 @@
+import { safeArray, logIfNotArray } from './util'
 import React, { useEffect, useState } from 'react'
 import { apiFetch, fmtEGP } from './apiBase'
 import Customers from './Customers'
@@ -5,6 +6,12 @@ import CustomerSelect from './CustomerSelect'
 import Products from './Products'
 import AdminDashboard from './AdminDashboard'
 import './ui.css'
+logIfNotArray("items", items);
+logIfNotArray("users", users);
+logIfNotArray("roles", roles);
+logIfNotArray("invoices", invoices);
+logIfNotArray("customers", customers);
+logIfNotArray("products", products);
 
 function Login({ onSuccess }) {
   const [email, setEmail] = useState('admin@highfurniture.com')
@@ -121,7 +128,7 @@ export default function App(){
             <table className="table">
               <thead><tr><th>الكود</th><th>العميل</th><th>المبلغ</th><th>التاريخ</th></tr></thead>
               <tbody>
-                {invoices.map(inv=>(
+                {safeArray(invoices).map(inv=>(
                   <tr key={inv.id}><td>{inv.code}</td><td>{inv.customer||'—'}</td><td>{fmtEGP(inv.amount)}</td><td>{new Date(inv.createdAt).toLocaleDateString('en-CA')}</td></tr>
                 ))}
                 {!invoices.length && <tr><td colSpan={4} className="muted">لا توجد فواتير بعد</td></tr>}

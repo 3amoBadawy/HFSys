@@ -1,7 +1,14 @@
+import { safeArray, logIfNotArray } from './util'
 import React, { useState } from 'react'
 import AdminUsers from './Admin'
 import AdminRoles from './AdminRoles'
 import './ui.css'
+logIfNotArray("items", items);
+logIfNotArray("users", users);
+logIfNotArray("roles", roles);
+logIfNotArray("invoices", invoices);
+logIfNotArray("customers", customers);
+logIfNotArray("products", products);
 
 export default function AdminDashboard(){
   const [tab,setTab]=useState('users')
