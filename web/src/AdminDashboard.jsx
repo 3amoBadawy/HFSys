@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react'
 import AdminUsers from './AdminUsers'
 import AdminRoles from './AdminRoles'
 import { apiFetch } from './apiBase'
-logIfNotArray("items", items);
 logIfNotArray("users", users);
 logIfNotArray("roles", roles);
 logIfNotArray("invoices", invoices);

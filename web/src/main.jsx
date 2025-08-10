@@ -5,7 +5,6 @@ import { safeArray, logIfNotArray } from './util'
 ensureLatest();
 import { BUILD_ID } from './build-id.js';
 ensureLatest();
-logIfNotArray("items", items);
 ensureLatest();
 logIfNotArray("users", users);
 ensureLatest();

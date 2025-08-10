@@ -1,7 +1,6 @@
 import { safeArray, logIfNotArray } from './util'
 import React, { useEffect, useMemo, useState } from 'react'
 import { apiFetch } from './apiBase'
-logIfNotArray("items", items);
 logIfNotArray("users", users);
 logIfNotArray("roles", roles);
 logIfNotArray("invoices", invoices);
