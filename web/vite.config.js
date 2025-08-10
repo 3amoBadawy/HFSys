@@ -2,7 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  base: process.env.VITE_BASE || '/',   // مهم لصفحات GitHub Pages
+  base: "/HFSys/",
+base: process.env.VITE_BASE || '/',   // مهم لصفحات GitHub Pages
   plugins: [react()],
   server: {
     host: true,
